@@ -12,18 +12,32 @@ Milton is a paint application with tablet support, recently upgraded to **SDL 3.
 - **OpenGL** development libraries
 
 ### Perl Modules
-Several Perl modules are required for the build process:
-- `File::Basename`
-- `File::Copy`
-- `File::Spec`
-- `Text::Wrap`
-- Additional standard library modules
+The following Perl modules are required for shader generation and build scripts:
 
-To install Perl modules on your system:
+#### Core Modules (Essential)
+- `FindBin` - locate Perl modules
+- `IPC::Cmd` - execute external commands
+- `File::Compare` - compare files
+- `Time::Piece` - date/time handling
+- `threads` - multithreading
+- `Thread::Queue` - thread-safe queues
 
-#### Linux (Fedora/RHEL)
+#### Full Module Installation
+
+##### Linux (Fedora/RHEL)
 ```bash
+# Core Perl and development tools
 sudo dnf install perl perl-devel
+
+# Install all required modules
+sudo dnf install perl-FindBin perl-IPC-Cmd perl-File-Compare perl-Time-Piece \
+                 perl-threads perl-Thread-Queue perl-Queue-DBI
+```
+
+##### Linux (Ubuntu/Debian)
+```bash
+sudo apt-get install perl perl-modules libfile-compare-perl libipc-cmd-perl \
+                     libtime-piece-perl libthread-queue-perl
 ```
 
 #### Linux (Ubuntu/Debian)
@@ -33,8 +47,11 @@ sudo apt-get install perl perl-modules
 
 #### macOS
 ```bash
-# Perl comes with macOS, but you may need additional modules via CPAN
-perl -MCPAN -e shell
+# Perl comes with macOS, but install via Homebrew for latest
+brew install perl
+
+# Then use CPAN or cpanminus for modules
+cpan File::Compare IPC::Cmd Time::Piece
 ```
 
 #### Windows
