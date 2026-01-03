@@ -674,6 +674,11 @@ milton_main(bool is_fullscreen, char* file_to_open)
 
         MiltonInput milton_input = sdl_event_loop(milton, &platform);
 
+        // Initialize ImGui frame AFTER event loop so state is fresh
+        ImGui_ImplVulkan_NewFrame();
+        ImGui_ImplSDL3_NewFrame();
+        ImGui::NewFrame();
+
         // Handle pen orientation to switch to eraser or pen.
         if ( EasyTab != NULL && EasyTab->PenInProximity ) {
             static int previous_orientation = 0;
@@ -784,17 +789,14 @@ milton_main(bool is_fullscreen, char* file_to_open)
 
         i32 input_flags = (i32)milton_input.flags;
 
-        ImGui_ImplVulkan_NewFrame();
-        ImGui_ImplSDL3_NewFrame();
-        ImGui::NewFrame();
-
         // Avoid the case where we stop changing the brush size when we hover over GUI elements.
         if ( milton->current_mode == MiltonMode::DRAG_BRUSH_SIZE ) {
             ImGui::GetIO().WantCaptureMouse = false;
         }
 
         // Clear our pointer input because we captured an ImGui widget!
-        if ( ImGui::GetIO().WantCaptureMouse ) {
+        // Only block input if ImGui wants mouse AND pointer is actually over GUI
+        if ( ImGui::GetIO().WantCaptureMouse && gui_point_hovers(milton->gui, platform.pointer) ) {
             platform.num_point_results = 0;
             platform.is_pointer_down = false;
             input_flags |= MiltonInputFlags_IMGUI_GRABBED_INPUT;
