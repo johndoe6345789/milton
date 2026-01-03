@@ -3,8 +3,8 @@
 
 #define IMGUI_IMPL_OPENGL_LOADER_CUSTOM "gl.h"
 #include <imgui.h>
-// SDL 3 migration: ImGui bindings may need update to SDL 3 version
-#include "imgui_impl_sdl.h"
+// SDL 3 migration: Using ImGui SDL3 backend
+#include "imgui_impl_sdl3.h"
 #include "imgui_impl_opengl3.h"
 
 #include "milton.h"

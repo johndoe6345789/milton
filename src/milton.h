@@ -6,6 +6,7 @@
 
 #include "memory.h"
 #include "system_includes.h"
+#include "sdl3_threading_shim.h"
 #include "canvas.h"
 #include "DArray.h"
 #include "profiler.h"

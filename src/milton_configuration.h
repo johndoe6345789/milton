@@ -71,7 +71,7 @@
 
 
 // Spawn threads to save the canvas.
-#define MILTON_SAVE_ASYNC 1
+#define MILTON_SAVE_ASYNC 1  // Re-enabled with SDL3 threading shim using C11 threads
 
 // When not in debug mode, disable all debug flags.
 

@@ -16,6 +16,9 @@ file(GLOB ShaderSources src/*.glsl)
 add_executable(Milton WIN32 MACOSX_BUNDLE
   src/unity.cc
   src/shaders.gen.h
+  src/imgui_impl_sdl3.cpp
+  src/imgui_impl_opengl3.cpp
+  src/sdl3_threading_shim.c
 )
 
 target_include_directories(Milton PRIVATE
@@ -26,9 +29,13 @@ target_include_directories(Milton PRIVATE
 find_package(OpenGL REQUIRED)
 find_package(SDL3 CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
-find_package(stb CONFIG REQUIRED)
 find_package(Threads REQUIRED)
 find_package(PkgConfig)
+
+# STB is header-only, add include directory
+target_include_directories(Milton PRIVATE
+  /home/rewrich/.conan2/p/stb19b77fb56ffd7/p/include
+)
 
 # Find GTK3 for Linux file dialogs
 if(UNIX AND NOT APPLE)
@@ -45,7 +52,6 @@ target_link_libraries(Milton
   SDL3::Headers
   SDL3::SDL3
   imgui::imgui
-  stb::stb
   Threads::Threads
 )
 

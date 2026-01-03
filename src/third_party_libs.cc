@@ -5,11 +5,10 @@
 #pragma warning(push,0)
 #endif
 
-    #include "../third_party/imgui/imgui.cpp"
-    #include "../third_party/imgui/imgui_widgets.cpp"
-    #include "../third_party/imgui/imgui_draw.cpp"
-    #include "../third_party/imgui/imgui_impl_sdl.cpp"
-    #include "../third_party/imgui/imgui_impl_opengl3.cpp"
+    #include "imgui.cpp"
+    #include "imgui_widgets.cpp"
+    #include "imgui_draw.cpp"
+    // ImGui SDL and OpenGL backends are compiled separately in CMakeLists.txt
 
     extern "C"
     {
