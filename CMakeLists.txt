@@ -22,6 +22,38 @@ target_include_directories(Milton PRIVATE
   src
 )
 
+# Find packages before using them
+find_package(OpenGL REQUIRED)
+find_package(SDL3 CONFIG REQUIRED)
+find_package(imgui CONFIG REQUIRED)
+find_package(stb CONFIG REQUIRED)
+find_package(Threads REQUIRED)
+find_package(PkgConfig)
+
+# Find GTK3 for Linux file dialogs
+if(UNIX AND NOT APPLE)
+  if(PkgConfig_FOUND)
+    pkg_check_modules(GTK3 REQUIRED gtk+-3.0)
+    include_directories(${GTK3_INCLUDE_DIRS})
+  endif()
+endif()
+
+# Link libraries to target
+target_link_libraries(Milton
+  PRIVATE
+  OpenGL::OpenGL
+  SDL3::Headers
+  SDL3::SDL3
+  imgui::imgui
+  stb::stb
+  Threads::Threads
+)
+
+# Link GTK3 on Linux
+if(UNIX AND NOT APPLE AND GTK3_FOUND)
+  target_link_libraries(Milton PRIVATE ${GTK3_LIBRARIES})
+endif()
+
 if(UNIX)
   target_compile_options(Milton PRIVATE
     -std=c++11
@@ -42,17 +74,6 @@ if(UNIX)
     target_compile_options(Milton PRIVATE -ObjC++)
   endif()
 endif()
-
-find_package(OpenGL REQUIRED)
-find_package(SDL2 CONFIG REQUIRED)
-find_package(Threads REQUIRED)
-
-target_link_libraries(Milton
-  OpenGL::OpenGL
-  SDL2::SDL2main
-  SDL2::SDL2
-  Threads::Threads
-)
 
 add_custom_command(TARGET Milton POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy

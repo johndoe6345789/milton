@@ -20,7 +20,7 @@ typedef double GLclampd;
 
 #include "gl_enums.inl"
 
-#include "glext.h"
+#include <GL/glext.h>
 
 #include "gl_functions.inl"
 

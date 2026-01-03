@@ -27,8 +27,8 @@
 
 
 // SDL
-#include <SDL.h>
-#include <SDL_syswm.h>
+#include <SDL3/SDL.h>
+// SDL_syswm.h was removed in SDL 3, native window access is now via SDL_GetProperty
 
 // Platform independent includes:
 #include <errno.h>
