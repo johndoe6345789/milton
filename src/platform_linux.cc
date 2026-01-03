@@ -9,7 +9,7 @@
 #define IMPL_MISSING mlt_assert(!"IMPLEMENT")
 
 
-extern "C" void* glXGetProcAddressARB(const GLubyte * procName);
+extern "C" void* glXGetProcAddressARB(const unsigned char* procName);
 
 float
 perf_count_to_sec(u64 counter)

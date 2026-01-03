@@ -14,7 +14,7 @@ namespace vk {
 Context g_vk_context = {};
 
 void log(const char* message) {
-    platform_log(message);
+    milton_log(message);
 }
 
 static const char* validation_layers[] = {
@@ -64,6 +64,8 @@ static bool check_validation_layer_support() {
     }
     return true;
 }
+
+static bool create_render_pass();
 
 static bool create_instance(SDL_Window* window) {
     VkApplicationInfo app_info = {};
@@ -253,8 +255,6 @@ static bool create_logical_device() {
         return false;
     }
     
-    volkLoadDevice(g_vk_context.device);
-
     vkGetDeviceQueue(g_vk_context.device, g_vk_context.graphics_queue_family, 0, &g_vk_context.graphics_queue);
     vkGetDeviceQueue(g_vk_context.device, g_vk_context.present_queue_family, 0, &g_vk_context.present_queue);
 

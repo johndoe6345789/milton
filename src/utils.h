@@ -5,6 +5,7 @@
 #pragma once
 
 #include "vector.h"
+#include <type_traits>
 
 #include "system_includes.h"  // Including this because some system headers will redefine macros. (offsetof in stddef.h)
 
@@ -14,13 +15,34 @@
 #define array_count(arr) (sizeof((arr)) / sizeof((arr)[0]))
 #endif
 
-#ifndef min
-#define min(a, b) (((a) < (b)) ? a : b)
+#ifdef min
+#undef min
+#endif
+#ifdef max
+#undef max
 #endif
 
-#ifndef max
-#define max(a, b) (((a) < (b)) ? b : a)
-#endif
+template <typename T>
+constexpr const T& min(const T& a, const T& b) {
+    return (a < b) ? a : b;
+}
+
+template <typename A, typename B>
+constexpr std::common_type_t<A, B> min(A a, B b) {
+    using C = std::common_type_t<A, B>;
+    return (static_cast<C>(a) < static_cast<C>(b)) ? static_cast<C>(a) : static_cast<C>(b);
+}
+
+template <typename T>
+constexpr const T& max(const T& a, const T& b) {
+    return (a < b) ? b : a;
+}
+
+template <typename A, typename B>
+constexpr std::common_type_t<A, B> max(A a, B b) {
+    using C = std::common_type_t<A, B>;
+    return (static_cast<C>(a) < static_cast<C>(b)) ? static_cast<C>(b) : static_cast<C>(a);
+}
 
 #ifndef offsetof
 #define offsetof(object, member) ((size_t)&(((object *)0)->member))
@@ -68,7 +90,7 @@ f32 norm(v2f v);
 
 v2f normalized (v2f v);
 
-f32 clamp(f32 value, f32 min, f32 max);
+f32 clamp(f32 value, f32 min_value, f32 max_value);
 
 #define SQUARE(x) ((x) * (x))
 

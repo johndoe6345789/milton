@@ -12,7 +12,7 @@
 #include "milton.cc"
 #include "persist.cc"
 #include "profiler.cc"
-#include "renderer_vk_stub.cc"
+#include "renderer_vk.cc"
 #include "sdl_milton.cc"
 #include "utils.cc"
 #include "vector.cc"

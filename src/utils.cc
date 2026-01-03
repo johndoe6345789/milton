@@ -119,9 +119,9 @@ normalized (v2f v)
 }
 
 f32
-clamp(f32 value, f32 min, f32 max)
+clamp(f32 value, f32 min_value, f32 max_value)
 {
-    return min(max(value, min), max);
+    return min(max(value, min_value), max_value);
 }
 
 

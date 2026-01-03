@@ -1,8 +1,6 @@
 // Copyright (c) 2015 Sergio Gonzalez. All rights reserved.
 // License: https://github.com/serge-rgb/milton#license
 
-#define IMGUI_IMPL_VULKAN_NO_PROTOTYPES
-#define VK_NO_PROTOTYPES
 #include <imgui.h>
 // SDL 3 migration: Using ImGui SDL3 backend from Conan
 #include <imgui_impl_sdl3.h>
@@ -386,7 +384,9 @@ sdl_event_loop(Milton* milton, PlatformState* platform)
                 platform->height = size.h;
 
                 milton_input.flags |= MiltonInputFlags_FULL_REFRESH;
+#if USE_GL_3_2
                 glViewport(0, 0, platform->width, platform->height);
+#endif
             } break;
             case SDL_EVENT_WINDOW_MOUSE_LEAVE: {
                 if ( event.window.windowID != platform->window_id ) {
@@ -534,27 +534,26 @@ milton_main(bool is_fullscreen, char* file_to_open)
     ImGui_ImplSDL3_InitForVulkan(window);
     
     ImGui_ImplVulkan_InitInfo init_info = {};
+    init_info.ApiVersion = VK_API_VERSION_1_2;
     init_info.Instance = vk::g_vk_context.instance;
     init_info.PhysicalDevice = vk::g_vk_context.physical_device;
     init_info.Device = vk::g_vk_context.device;
     init_info.QueueFamily = vk::g_vk_context.graphics_queue_family;
     init_info.Queue = vk::g_vk_context.graphics_queue;
-    init_info.PipelineCache = VK_NULL_HANDLE;
     init_info.DescriptorPool = vk::g_vk_context.descriptor_pool;
-    init_info.Subpass = 0;
+    init_info.DescriptorPoolSize = 0;
     init_info.MinImageCount = 2;
     init_info.ImageCount = vk::g_vk_context.swapchain_image_count;
-    init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+    init_info.PipelineCache = VK_NULL_HANDLE;
+    init_info.PipelineInfoMain.RenderPass = vk::g_vk_context.render_pass;
+    init_info.PipelineInfoMain.Subpass = 0;
+    init_info.PipelineInfoMain.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+    init_info.UseDynamicRendering = false;
     init_info.Allocator = nullptr;
     init_info.CheckVkResultFn = nullptr;
-    
-    ImGui_ImplVulkan_Init(&init_info, vk::g_vk_context.render_pass);
-    
-    // Upload ImGui fonts
-    VkCommandBuffer command_buffer = vk::begin_single_time_commands();
-    ImGui_ImplVulkan_CreateFontsTexture();
-    vk::end_single_time_commands(command_buffer);
-    ImGui_ImplVulkan_DestroyFontsTexture();
+    init_info.MinAllocationSize = 0;
+
+    ImGui_ImplVulkan_Init(&init_info);
 
     // ==== Initialize milton
 
@@ -844,12 +843,6 @@ milton_main(bool is_fullscreen, char* file_to_open)
             
             // ImGui will be rendered to the command buffer in gpu_render
             // The actual Vulkan present happens in gpu_render's command submission
-        }
-        PROFILE_GRAPH_END(GL);
-        PROFILE_GRAPH_BEGIN(system);
-            present_info.pImageIndices = &image_index;
-            
-            vkQueuePresentKHR(vk::g_vk_context.present_queue, &present_info);
         }
         PROFILE_GRAPH_END(GL);
         PROFILE_GRAPH_BEGIN(system);

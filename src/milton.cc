@@ -1159,7 +1159,8 @@ static i64
 peek_out_target_scale(Milton* milton)
 {
     double log_scale = log2(1 + milton->view->scale) / log2(SCALE_FACTOR);
-    i64 target = min(pow(SCALE_FACTOR, log_scale + milton->settings->peek_out_increment), VIEW_SCALE_LIMIT);
+    i64 target = min(static_cast<i64>(pow(SCALE_FACTOR, log_scale + milton->settings->peek_out_increment)),
+                     static_cast<i64>(VIEW_SCALE_LIMIT));
     return target;
 }
 
@@ -1608,9 +1609,9 @@ milton_update_and_render(Milton* milton, MiltonInput const* input)
             i32 h = MLT_ABS(exporter->pivot.y - exporter->needle.y);
 
             float left = 2*((float)    x / (milton->view->screen_size.w))-1;
-            float right = 2*((GLfloat)(x+w) / (milton->view->screen_size.w))-1;
-            float top = -(2*((GLfloat)y     / (milton->view->screen_size.h))-1);
-            float bottom = -(2*((GLfloat)(y+h) / (milton->view->screen_size.h))-1);
+            float right = 2*((float)(x+w) / (milton->view->screen_size.w))-1;
+            float top = -(2*((float)y     / (milton->view->screen_size.h))-1);
+            float bottom = -(2*((float)(y+h) / (milton->view->screen_size.h))-1);
 
             imm_rect(milton->renderer, left, right, top, bottom, 2.0);
         }

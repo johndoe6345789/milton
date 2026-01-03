@@ -1,8 +1,7 @@
 // Copyright (c) 2015 Sergio Gonzalez. All rights reserved.
 // License: https://github.com/serge-rgb/milton#license
 
-// Vulkan renderer - minimal implementation to get Milton running
-// Full rendering features to be implemented incrementally
+// Vulkan renderer - main implementation
 
 #include "shaders.gen.h"
 
@@ -16,6 +15,8 @@
 
 #include <cmath>
 #include <cstring>
+#include <imgui.h>
+#include <imgui_impl_vulkan.h>
 
 #define MAX_DEPTH_VALUE (1<<20)
 #define RENDER_CHUNK_SIZE_LOG2 28
@@ -46,6 +47,20 @@ struct BrushUBO
     float opacity_min;
     float hardness;
     float pad[2];
+};
+
+struct PickerUBO
+{
+    float pointa[2];
+    float pointb[2];
+    float pointc[2];
+    float triangle_point[2];
+    float screen_size[2];
+    float pad0[2];
+    float color[4];
+    float angle;
+    float pad1[3];
+    float colors[5][4];
 };
 
 struct RenderElement
@@ -142,20 +157,6 @@ struct StrokeVertex
     float x;
     float y;
     float z;
-};
-
-struct PickerUBO
-{
-    float pointa[2];
-    float pointb[2];
-    float pointc[2];
-    float triangle_point[2];
-    float screen_size[2];
-    float pad0[2];
-    float color[4];
-    float angle;
-    float pad1[3];
-    float colors[5][4];
 };
 
 struct OutlineUBO
