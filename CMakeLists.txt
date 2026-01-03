@@ -1,18 +1,21 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.16)
 project(Milton)
+
+# Prefer GLVND when available and silence the dev warning on newer CMake.
+if(POLICY CMP0072)
+  cmake_policy(SET CMP0072 NEW)
+  set(OpenGL_GL_PREFERENCE GLVND)
+endif()
 
 if(WIN32)
   set(DIRECTX 0)
 endif()
 
-
 add_executable(shadergen
   src/shadergen.cc
 )
 
-set(SDL2DIR ${CMAKE_CURRENT_SOURCE_DIR}/third_party/SDL2-2.0.8)
-
-FILE (GLOB ShaderSources src/*.glsl third_party/*.glsl)
+file(GLOB ShaderSources src/*.glsl third_party/*.glsl)
 
 add_executable(Milton WIN32 MACOSX_BUNDLE
   src/unity.cc
@@ -25,11 +28,9 @@ target_include_directories(Milton PRIVATE
   third_party/imgui
 )
 
-# Handle various switches, build types etc.
-
-## Default build type to Release
+# Default build type to Release
 if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE "Release")
+  set(CMAKE_BUILD_TYPE "Release")
 endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -37,7 +38,8 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
   add_definitions(-DMILTON_DEBUG=0)
 else()
-  message(FATAL_ERROR "Unknown build type: ${CMAKE_BUILD_TYPE}. Supported build types: Release, Debug.")
+  message(FATAL_ERROR
+    "Unknown build type: ${CMAKE_BUILD_TYPE}. Supported build types: Release, Debug.")
 endif()
 
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
@@ -60,16 +62,20 @@ if(UNIX)
     -fno-omit-frame-pointer
     -Wno-extern-c-compat
     #-Werror
-    )
-  if (APPLE)
-      set(UnixCFlags "${UnixCFlags}" -ObjC++)
+  )
+
+  if(APPLE)
+    set(UnixCFlags "${UnixCFlags}" -ObjC++)
   endif()
 
-  target_compile_options(shadergen PRIVATE
-    ${UnixCFlags})
-  target_compile_options(Milton PRIVATE
-    ${UnixCFlags})
+  target_compile_options(shadergen PRIVATE ${UnixCFlags})
+  target_compile_options(Milton PRIVATE ${UnixCFlags})
 endif()
+
+# SDL2:
+# - On Linux: provided by Conan via CMakeDeps => find_package(SDL2 CONFIG REQUIRED)
+# - On macOS/Windows: uses vendored SDL2 in third_party/SDL2-2.0.8 (as before)
+set(SDL2DIR ${CMAKE_CURRENT_SOURCE_DIR}/third_party/SDL2-2.0.8)
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
 
@@ -79,16 +85,19 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
   find_library(XINPUT_LIBRARY libXi.so)
   find_package(Threads REQUIRED)
 
+  # Conan 2.x: CMakeDeps generates SDL2 CONFIG package with imported targets.
+  find_package(SDL2 CONFIG REQUIRED)
+
   if(XINPUT_LIBRARY STREQUAL "XINPUT_LIBRARY-NOTFOUND")
-      message(FATAL_ERROR "Could not find libXi.so")
+    message(FATAL_ERROR "Could not find libXi.so")
   endif()
 
   if(NOT OPENGL_FOUND)
-      message(FATAL_ERROR "Could not find OpenGl libraries")
+    message(FATAL_ERROR "Could not find OpenGL libraries")
   endif()
 
   if(NOT GTK2_FOUND)
-    message(FATAL_ERROR "Could not find GTK2.8 libraries")
+    message(FATAL_ERROR "Could not find GTK2 libraries")
   endif()
 
   if(NOT X11_FOUND)
@@ -98,7 +107,6 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
   target_include_directories(Milton PRIVATE
     ${GTK2_INCLUDE_DIRS}
     ${X11_INCLUDE_DIR}
-    ${SDL2DIR}/build/linux64/include/SDL2
     ${OPENGL_INCLUDE_DIR}
   )
 
@@ -107,11 +115,11 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     ${X11_LIBRARIES}
     ${OPENGL_LIBRARIES}
     ${XINPUT_LIBRARY}
-    ${SDL2DIR}/build/linux64/lib/libSDL2maind.a
-    ${SDL2DIR}/build/linux64/lib/libSDL2d.a
+    SDL2::SDL2main
+    SDL2::SDL2
     ${CMAKE_THREAD_LIBS_INIT}
     ${CMAKE_DL_LIBS}
-    )
+  )
 
 else()
   add_subdirectory(${SDL2DIR})
@@ -119,11 +127,8 @@ else()
 endif()
 
 if(APPLE)
-  target_link_libraries(Milton
-    "-framework OpenGL"
-  )
+  target_link_libraries(Milton "-framework OpenGL")
 endif()
-
 
 if(WIN32 OR APPLE)
   target_include_directories(Milton PRIVATE
@@ -140,7 +145,6 @@ add_custom_command(TARGET Milton POST_BUILD
 )
 
 add_dependencies(Milton shadergen)
-
 
 add_custom_command(
   COMMAND $<TARGET_FILE:shadergen>
