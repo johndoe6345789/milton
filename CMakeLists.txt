@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.16)
 project(Milton)
 
+# Prevent in-source builds
+if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
+  message(FATAL_ERROR "In-source builds are not allowed. Please use the 'build' folder:\n  mkdir -p build\n  cd build\n  cmake ..\n  cmake --build .")
+endif()
+
 # Prefer GLVND when available and silence the dev warning on newer CMake.
 if(POLICY CMP0072)
   cmake_policy(SET CMP0072 NEW)
