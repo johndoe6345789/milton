@@ -12,11 +12,23 @@ if(POLICY CMP0072)
   set(OpenGL_GL_PREFERENCE GLVND)
 endif()
 
-add_executable(shadergen
-  src/shadergen.cc
+# Generate shader header using Perl script
+file(GLOB ShaderSources src/*.glsl)
+
+# Find Perl
+find_package(Perl REQUIRED)
+
+# Custom command to generate shaders.gen.h using Perl script
+add_custom_command(
+  OUTPUT ${CMAKE_SOURCE_DIR}/src/shaders.gen.h
+  COMMAND ${PERL_EXECUTABLE} ${CMAKE_SOURCE_DIR}/generate_shaders.pl ${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/src/shaders.gen.h
+  DEPENDS ${ShaderSources} ${CMAKE_SOURCE_DIR}/generate_shaders.pl
+  COMMENT "Generating shader header file with Perl"
+  VERBATIM
 )
 
-file(GLOB ShaderSources src/*.glsl)
+# Custom target to force shader generation
+add_custom_target(generate_shaders DEPENDS ${CMAKE_SOURCE_DIR}/src/shaders.gen.h)
 
 add_executable(Milton WIN32 MACOSX_BUNDLE
   src/unity.cc
@@ -126,4 +138,4 @@ add_custom_command(TARGET Milton POST_BUILD
     $<TARGET_FILE_DIR:Milton>
 )
 
-add_dependencies(Milton shadergen)
+add_dependencies(Milton generate_shaders)

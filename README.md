@@ -7,52 +7,11 @@ Milton is a paint application with tablet support, recently upgraded to **SDL 3.
 ### Required Tools
 - **CMake** 3.16 or higher
 - **Conan** 2.0+ (package manager)
-- **Perl** 5.10+ (required for build scripts)
+- **Perl** 5.10+ (required for shader code generation - uses only standard modules)
 - **C++ Compiler** with C++11 support (GCC 15+ recommended for Linux)
 - **OpenGL** development libraries
 
-### Perl Modules
-The following Perl modules are required for shader generation and build scripts:
-
-#### Core Modules (Essential)
-- `FindBin` - locate Perl modules
-- `IPC::Cmd` - execute external commands
-- `File::Compare` - compare files
-- `Time::Piece` - date/time handling
-- `threads` - multithreading
-- `Thread::Queue` - thread-safe queues
-
-#### Full Module Installation
-
-##### Linux (Fedora/RHEL)
-```bash
-# Core Perl and development tools
-sudo dnf install perl perl-devel
-
-# Install all required modules
-sudo dnf install perl-FindBin perl-IPC-Cmd perl-File-Compare perl-Time-Piece \
-                 perl-threads perl-Thread-Queue perl-Queue-DBI
-```
-
-##### Linux (Ubuntu/Debian)
-```bash
-sudo apt-get install perl perl-modules libfile-compare-perl libipc-cmd-perl \
-                     libtime-piece-perl libthread-queue-perl
-```
-
-#### macOS
-```bash
-# Perl comes with macOS, but install via Homebrew for latest
-brew install perl
-
-# Then use CPAN or cpanminus for modules
-cpan File::Compare IPC::Cmd Time::Piece
-```
-
-#### Windows
-Download and install ActivePerl or Strawberry Perl from [perl.org](https://www.perl.org/)
-
-### System Dependencies (after Perl/CMake/Conan installed)
+### System Dependencies
 
 #### Linux (Fedora/RHEL)
 ```bash
@@ -101,15 +60,15 @@ cmake -B build -G "Unix Makefiles" -DCMAKE_TOOLCHAIN_FILE=build/Release/generato
 ### Step 3: Build
 
 ```bash
-cmake --build build -- -j$(nproc)
+cmake --build build/Release -- -j$(nproc)
 # Or use make directly
-cd build && make -j$(nproc)
+cd build/Release && make -j$(nproc)
 ```
 
 ### Step 4: Run
 
 ```bash
-./build/Milton
+./build/Release/Milton
 ```
 
 ## Project Structure
@@ -203,11 +162,14 @@ To clean all generated files and start fresh:
 This removes the build directory, Conan-generated files, and CMake config files from the root.
 
 ### Generating Shader Headers
-Shaders are pre-compiled. To regenerate:
+Shaders are automatically generated during build using a Perl script ([generate_shaders.pl](generate_shaders.pl)). The script reads GLSL shader files from the src directory and embeds them as C string literals in [src/shaders.gen.h](src/shaders.gen.h).
+
+To manually regenerate shaders:
 ```bash
-cmake --build . --target shadergen
-./shadergen
+./generate_shaders.pl src src/shaders.gen.h
 ```
+
+The build system automatically runs this script when any `.glsl` file changes.
 
 ### Code Style
 - C++11 compatible

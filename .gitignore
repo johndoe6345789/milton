@@ -80,5 +80,4 @@ src/shaders.gen.h
 OUTPUT
 
 # Build artifacts
-shadergen
 Milton
