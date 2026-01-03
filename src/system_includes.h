@@ -49,25 +49,19 @@
 
 #if defined(_WIN32)
 
-#include "gl.h"
+#include "vk.h"
 
 #elif defined(__linux__)
 
-#include "gl.h"
-
-// #define GL_GLEXT_PROTOTYPES
-// #include <GL/gl.h>
-// #include <GL/glext.h>
+#include "vk.h"
 
 #include <dlfcn.h>  // Dynamic library loading.
 
 #elif defined (__MACH__)
 
-// #define GL_GLEXT_PROTOTYPES 1
-// #include "SDL_opengl.h"
-#include "gl.h"
+#include "vk.h"
 
-#endif // OpenGL includes
+#endif // Vulkan includes
 
 #if defined(_WIN32) && defined(_MSC_VER)
 #pragma warning(pop)

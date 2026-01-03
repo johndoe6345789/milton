@@ -58,15 +58,13 @@
 #define MILTON_HARDWARE_BRUSH_CURSOR 0
 #endif
 
-// Uses GL 2.1 when 0
-#define USE_GL_3_2 1
+// OpenGL no longer used; keep for legacy guards.
+#define USE_GL_3_2 0
 
 
-    // Use 3.2 on macos. OpenGL 3.2 is supported by all mac computers since macOS 10.8.5
-    // https://developer.apple.com/opengl/OpenGL-Capabilities-Tables.pdf
     #if defined(__MACH__)
         #undef USE_GL_3_2
-        #define USE_GL_3_2 1
+        #define USE_GL_3_2 0
     #endif
 
 

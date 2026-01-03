@@ -75,7 +75,7 @@ void gpu_cook_stroke(Arena* arena, RenderBackend* renderer, Stroke* stroke,
 void gpu_free_strokes(RenderBackend* renderer, CanvasState* canvas);
 
 
-// Creates OpenGL objects for strokes that are in view but are not loaded on the GPU. Deletes
+// Creates GPU objects for strokes that are in view but are not loaded on the GPU. Deletes
 // content for strokes that are far away.
 enum ClipFlags
 {
@@ -94,4 +94,3 @@ void gpu_render(RenderBackend* renderer,  i32 view_x, i32 view_y, i32 view_width
 void gpu_render_to_buffer(Milton* milton, u8* buffer, i32 scale, i32 x, i32 y, i32 w, i32 h, f32 background_alpha);
 
 void gpu_release_data(RenderBackend* renderer);
-

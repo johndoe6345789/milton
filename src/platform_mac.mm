@@ -91,18 +91,6 @@ platform_cursor_get_position(PlatformState* platform)
 }
 
 
-void*
-platform_get_gl_proc(char* name)
-{
-    static void* image = NULL;
-
-    if (NULL == image) {
-        image = dlopen("/System/Library/Frameworks/OpenGL.framework/Versions/Current/OpenGL", RTLD_LAZY);
-    }
-    return (image ? dlsym(image, (const char *)name) : NULL);
-
-}
-
 char*
 mac_panel(NSSavePanel *panel, FileKind kind)
 {

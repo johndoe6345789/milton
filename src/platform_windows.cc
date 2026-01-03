@@ -276,34 +276,6 @@ platform_handle_tablet_input(PlatformState* platform)
     }
 }
 
-void*
-platform_get_gl_proc(char* name)
-{
-    void* func = NULL;
-    func = (void*)wglGetProcAddress(name);
-    if ( func == NULL )  {
-        static HMODULE dll_handle = LoadLibraryA("OpenGL32.dll");
-        if (dll_handle) {
-            func = (void*)GetProcAddress(dll_handle, name);
-        }
-
-        if (func) {
-            milton_log("Loaded %s from OpenGL32.dll\n", name);
-        }
-        else {
-            static const sz msglen = 128;
-            char msg[msglen] = {};
-            snprintf(msg, msglen, "Could not load function %s\nYour GPU does not support Milton :(", name);
-            milton_log(msg);
-            milton_die_gracefully(msg);
-        }
-    }
-    else {
-        milton_log("Loaded %s rom WGL\n", name);
-    }
-    return func;
-}
-
 void
 win_load_dpi_api(WinDpiApi* api) {
     HMODULE shcore = LoadLibrary("Shcore.dll");
@@ -909,4 +881,3 @@ str_to_path_char(char* str, PATH_CHAR* out, size_t out_sz)
 
 
 } // extern "C"
-

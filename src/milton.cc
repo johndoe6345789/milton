@@ -650,7 +650,6 @@ milton_init(Milton* milton, i32 width, i32 height, f32 ui_scale, PATH_CHAR* file
 
     milton->smooth_filter = arena_alloc_elem(&milton->root_arena, SmoothFilter);
 
-    if (init_graphics) { milton->gl = arena_alloc_elem(&milton->root_arena, MiltonGLState); }
     milton->gui = arena_alloc_elem(&milton->root_arena, MiltonGui);
     milton->settings = arena_alloc_elem(&milton->root_arena, MiltonSettings);
     milton->eyedropper = arena_alloc_elem(&milton->root_arena, Eyedropper);
@@ -765,7 +764,7 @@ milton_init(Milton* milton, i32 width, i32 height, f32 ui_scale, PATH_CHAR* file
 void
 upload_gui(Milton* milton)
 {
-    if (milton->gl)
+    if (milton->renderer)
     {
         gpu_update_canvas(milton->renderer, milton->canvas, milton->view);
         gpu_resize(milton->renderer, milton->view);

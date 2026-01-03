@@ -1,14 +1,15 @@
 // Copyright (c) 2015 Sergio Gonzalez. All rights reserved.
 // License: https://github.com/serge-rgb/milton#license
 
-#define IMGUI_IMPL_OPENGL_LOADER_CUSTOM "gl.h"
+#define IMGUI_IMPL_VULKAN_NO_PROTOTYPES
+#define VK_NO_PROTOTYPES
 #include <imgui.h>
 // SDL 3 migration: Using ImGui SDL3 backend from Conan
 #include <imgui_impl_sdl3.h>
-#include <imgui_impl_opengl3.h>
+#include <imgui_impl_vulkan.h>
 
 #include "milton.h"
-#include "gl_helpers.h"
+#include "vk.h"
 #include "gui.h"
 #include "persist.h"
 #include "bindings.h"
@@ -490,32 +491,11 @@ milton_main(bool is_fullscreen, char* file_to_open)
 
     platform.keyboard_layout = get_current_keyboard_layout();
 
-#if USE_GL_3_2
-    i32 gl_version_major = 3;
-    i32 gl_version_minor = 2;
-    milton_log("Requesting OpenGL 3.2 context.\n");
-#else
-    i32 gl_version_major = 2;
-    i32 gl_version_minor = 1;
-    milton_log("Requesting OpenGL 2.1 context.\n");
-#endif
+    milton_log("Creating Milton Window with Vulkan\n");
 
     SDL_Window* window = NULL;
-    milton_log("Creating Milton Window\n");
 
-    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-    SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, gl_version_major);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, gl_version_minor);
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, true);
-    #if USE_GL_3_2
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-    #endif
-    #if MILTON_DEBUG
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
-    #endif
-
-    Uint32 sdl_window_flags = SDL_WINDOW_OPENGL | SDL_WINDOW_HIGH_PIXEL_DENSITY;
+    Uint32 sdl_window_flags = SDL_WINDOW_VULKAN | SDL_WINDOW_HIGH_PIXEL_DENSITY;
 
     if (is_fullscreen) {
         sdl_window_flags |= SDL_WINDOW_FULLSCREEN;
@@ -542,42 +522,39 @@ milton_main(bool is_fullscreen, char* file_to_open)
     platform.width = size_px.w;
     platform.height = size_px.h;
 
-    SDL_GLContext gl_context = SDL_GL_CreateContext(window);
-
-    if ( !gl_context ) {
-        milton_die_gracefully("Could not create OpenGL context\n");
-    }
-
-    if ( !gl::load() ) {
-        milton_die_gracefully("Milton could not load the necessary OpenGL functionality. Exiting.");
+    // Initialize Vulkan
+    if ( !vk::init(window) ) {
+        milton_die_gracefully("Could not initialize Vulkan\n");
     }
 
     // Init ImGUI
     ImGui::CreateContext();
 
-
-#if USE_GL_3_2
-    const char* gl_version = "#version 330 \n";
-#else
-    const char* gl_version = "#version 120 \n";
-#endif
-
-    ImGui_ImplSDL3_InitForOpenGL(window, &gl_context);
-    ImGui_ImplOpenGL3_Init(gl_version);
-
-    SDL_GL_SetSwapInterval(1);
-
-    int actual_major = 0;
-    int actual_minor = 0;
-    glGetIntegerv(GL_MAJOR_VERSION, &actual_major);
-    glGetIntegerv(GL_MINOR_VERSION, &actual_minor);
-    if ( !(actual_major == 0 && actual_minor == 0)
-         && (actual_major < gl_version_major
-             || (actual_major == gl_version_major && actual_minor < gl_version_minor)) ) {
-        milton_die_gracefully("This graphics driver does not support OpenGL 2.1+");
-    }
-    milton_log("Created OpenGL context with version %s\n", glGetString(GL_VERSION));
-    milton_log("    and GLSL %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
+    // Setup Vulkan ImGui backend
+    ImGui_ImplSDL3_InitForVulkan(window);
+    
+    ImGui_ImplVulkan_InitInfo init_info = {};
+    init_info.Instance = vk::g_vk_context.instance;
+    init_info.PhysicalDevice = vk::g_vk_context.physical_device;
+    init_info.Device = vk::g_vk_context.device;
+    init_info.QueueFamily = vk::g_vk_context.graphics_queue_family;
+    init_info.Queue = vk::g_vk_context.graphics_queue;
+    init_info.PipelineCache = VK_NULL_HANDLE;
+    init_info.DescriptorPool = vk::g_vk_context.descriptor_pool;
+    init_info.Subpass = 0;
+    init_info.MinImageCount = 2;
+    init_info.ImageCount = vk::g_vk_context.swapchain_image_count;
+    init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+    init_info.Allocator = nullptr;
+    init_info.CheckVkResultFn = nullptr;
+    
+    ImGui_ImplVulkan_Init(&init_info, vk::g_vk_context.render_pass);
+    
+    // Upload ImGui fonts
+    VkCommandBuffer command_buffer = vk::begin_single_time_commands();
+    ImGui_ImplVulkan_CreateFontsTexture();
+    vk::end_single_time_commands(command_buffer);
+    ImGui_ImplVulkan_DestroyFontsTexture();
 
     // ==== Initialize milton
 
@@ -799,7 +776,7 @@ milton_main(bool is_fullscreen, char* file_to_open)
 
         i32 input_flags = (i32)milton_input.flags;
 
-        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplVulkan_NewFrame();
         ImGui_ImplSDL3_NewFrame();
         ImGui::NewFrame();
 
@@ -859,18 +836,23 @@ milton_main(bool is_fullscreen, char* file_to_open)
         if ( !(milton->flags & MiltonStateFlags_RUNNING) ) {
             platform.should_quit = true;
         }
+        
+        // Render ImGui on top
         {
             ImGuiIO& io = ImGui::GetIO(); (void)io;
             ImGui::Render();
-            SDL_GL_MakeCurrent(window, gl_context);
-            PUSH_GRAPHICS_GROUP("ImGui");
-            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-            POP_GRAPHICS_GROUP();
+            
+            // ImGui will be rendered to the command buffer in gpu_render
+            // The actual Vulkan present happens in gpu_render's command submission
         }
         PROFILE_GRAPH_END(GL);
         PROFILE_GRAPH_BEGIN(system);
-        SDL_GL_SwapWindow(window);
-
+            present_info.pImageIndices = &image_index;
+            
+            vkQueuePresentKHR(vk::g_vk_context.present_queue, &present_info);
+        }
+        PROFILE_GRAPH_END(GL);
+        PROFILE_GRAPH_BEGIN(system);
         platform_event_tick();
 
         // Sleep if the frame took less time than the refresh rate.

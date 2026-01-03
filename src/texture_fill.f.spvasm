@@ -1,0 +1,116 @@
+; SPIR-V
+; Version: 1.0
+; Generator: Khronos Glslang Reference Front End; 11
+; Bound: 57
+; Schema: 0
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %main "main" %gl_FragCoord %out_color
+               OpExecutionMode %main OriginUpperLeft
+               OpSource GLSL 450
+               OpName %main "main"
+               OpName %screen_point "screen_point"
+               OpName %gl_FragCoord "gl_FragCoord"
+               OpName %coord "coord"
+               OpName %ViewUBO "ViewUBO"
+               OpMemberName %ViewUBO 0 "u_rotation"
+               OpMemberName %ViewUBO 1 "u_rotation_inverse"
+               OpMemberName %ViewUBO 2 "u_pan_center"
+               OpMemberName %ViewUBO 3 "u_zoom_center"
+               OpMemberName %ViewUBO 4 "u_screen_size"
+               OpMemberName %ViewUBO 5 "u_scale"
+               OpMemberName %ViewUBO 6 "u_radius"
+               OpName %u_view "u_view"
+               OpName %color "color"
+               OpName %u_canvas "u_canvas"
+               OpName %out_color "out_color"
+               OpName %FillParams "FillParams"
+               OpMemberName %FillParams 0 "u_alpha"
+               OpMemberName %FillParams 1 "u_fill_pad"
+               OpName %u_fill "u_fill"
+               OpDecorate %gl_FragCoord BuiltIn FragCoord
+               OpDecorate %ViewUBO Block
+               OpMemberDecorate %ViewUBO 0 ColMajor
+               OpMemberDecorate %ViewUBO 0 MatrixStride 16
+               OpMemberDecorate %ViewUBO 0 Offset 0
+               OpMemberDecorate %ViewUBO 1 ColMajor
+               OpMemberDecorate %ViewUBO 1 MatrixStride 16
+               OpMemberDecorate %ViewUBO 1 Offset 32
+               OpMemberDecorate %ViewUBO 2 Offset 64
+               OpMemberDecorate %ViewUBO 3 Offset 72
+               OpMemberDecorate %ViewUBO 4 Offset 80
+               OpMemberDecorate %ViewUBO 5 Offset 88
+               OpMemberDecorate %ViewUBO 6 Offset 92
+               OpDecorate %u_view Binding 0
+               OpDecorate %u_view DescriptorSet 0
+               OpDecorate %u_canvas Binding 0
+               OpDecorate %u_canvas DescriptorSet 1
+               OpDecorate %out_color Location 0
+               OpDecorate %FillParams Block
+               OpMemberDecorate %FillParams 0 Offset 0
+               OpMemberDecorate %FillParams 1 Offset 16
+               OpDecorate %u_fill Binding 1
+               OpDecorate %u_fill DescriptorSet 1
+       %void = OpTypeVoid
+          %3 = OpTypeFunction %void
+      %float = OpTypeFloat 32
+    %v2float = OpTypeVector %float 2
+%_ptr_Function_v2float = OpTypePointer Function %v2float
+    %v4float = OpTypeVector %float 4
+%_ptr_Input_v4float = OpTypePointer Input %v4float
+%gl_FragCoord = OpVariable %_ptr_Input_v4float Input
+       %uint = OpTypeInt 32 0
+     %uint_0 = OpConstant %uint 0
+%_ptr_Input_float = OpTypePointer Input %float
+     %uint_1 = OpConstant %uint 1
+%mat2v2float = OpTypeMatrix %v2float 2
+        %int = OpTypeInt 32 1
+      %v2int = OpTypeVector %int 2
+    %ViewUBO = OpTypeStruct %mat2v2float %mat2v2float %v2int %v2int %v2float %int %int
+%_ptr_Uniform_ViewUBO = OpTypePointer Uniform %ViewUBO
+     %u_view = OpVariable %_ptr_Uniform_ViewUBO Uniform
+      %int_4 = OpConstant %int 4
+%_ptr_Uniform_v2float = OpTypePointer Uniform %v2float
+%_ptr_Function_v4float = OpTypePointer Function %v4float
+         %37 = OpTypeImage %float 2D 0 0 0 1 Unknown
+         %38 = OpTypeSampledImage %37
+%_ptr_UniformConstant_38 = OpTypePointer UniformConstant %38
+   %u_canvas = OpVariable %_ptr_UniformConstant_38 UniformConstant
+%_ptr_Output_v4float = OpTypePointer Output %v4float
+  %out_color = OpVariable %_ptr_Output_v4float Output
+    %v3float = OpTypeVector %float 3
+ %FillParams = OpTypeStruct %float %v3float
+%_ptr_Uniform_FillParams = OpTypePointer Uniform %FillParams
+     %u_fill = OpVariable %_ptr_Uniform_FillParams Uniform
+      %int_0 = OpConstant %int 0
+%_ptr_Uniform_float = OpTypePointer Uniform %float
+       %main = OpFunction %void None %3
+          %5 = OpLabel
+%screen_point = OpVariable %_ptr_Function_v2float Function
+      %coord = OpVariable %_ptr_Function_v2float Function
+      %color = OpVariable %_ptr_Function_v4float Function
+         %16 = OpAccessChain %_ptr_Input_float %gl_FragCoord %uint_0
+         %17 = OpLoad %float %16
+         %19 = OpAccessChain %_ptr_Input_float %gl_FragCoord %uint_1
+         %20 = OpLoad %float %19
+         %21 = OpCompositeConstruct %v2float %17 %20
+               OpStore %screen_point %21
+         %23 = OpLoad %v2float %screen_point
+         %32 = OpAccessChain %_ptr_Uniform_v2float %u_view %int_4
+         %33 = OpLoad %v2float %32
+         %34 = OpFDiv %v2float %23 %33
+               OpStore %coord %34
+         %41 = OpLoad %38 %u_canvas
+         %42 = OpLoad %v2float %coord
+         %43 = OpImageSampleImplicitLod %v4float %41 %42
+               OpStore %color %43
+         %46 = OpLoad %v4float %color
+               OpStore %out_color %46
+         %53 = OpAccessChain %_ptr_Uniform_float %u_fill %int_0
+         %54 = OpLoad %float %53
+         %55 = OpLoad %v4float %out_color
+         %56 = OpVectorTimesScalar %v4float %55 %54
+               OpStore %out_color %56
+               OpReturn
+               OpFunctionEnd

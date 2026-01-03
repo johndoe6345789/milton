@@ -78,7 +78,7 @@ milton/
 ├── src/                    # Source code
 │   ├── sdl_milton.cc      # Main SDL event loop
 │   ├── platform_*.cc      # Platform-specific code (Linux, Windows, macOS)
-│   ├── *.glsl             # OpenGL shaders
+│   ├── *.spvasm           # SPIR-V assembly shaders
 │   └── ...
 ├── CMakeLists.txt         # CMake build configuration
 ├── conanfile.txt          # Conan dependencies
@@ -162,14 +162,14 @@ To clean all generated files and start fresh:
 This removes the build directory, Conan-generated files, and CMake config files from the root.
 
 ### Generating Shader Headers
-Shaders are automatically generated during build using a Perl script ([generate_shaders.pl](generate_shaders.pl)). The script reads GLSL shader files from the src directory and embeds them as C string literals in [src/shaders.gen.h](src/shaders.gen.h).
+Shaders are stored as SPIR-V assembly (`.spvasm`) and embedded during build using a Perl script ([generate_shaders.pl](generate_shaders.pl)) into [src/shaders.gen.h](src/shaders.gen.h).
 
 To manually regenerate shaders:
 ```bash
 ./generate_shaders.pl src src/shaders.gen.h
 ```
 
-The build system automatically runs this script when any `.glsl` file changes.
+The build system automatically runs this script when any `.spvasm` file changes. Ensure `spirv-as` is installed or set `SPIRV_AS` to its path.
 
 ### Code Style
 - C++11 compatible

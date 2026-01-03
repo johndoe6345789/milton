@@ -13,15 +13,22 @@ if(POLICY CMP0072)
 endif()
 
 # Generate shader header using Perl script
-file(GLOB ShaderSources src/*.glsl)
+file(GLOB ShaderSources src/*.spvasm)
 
 # Find Perl
 find_package(Perl REQUIRED)
 
+# Find spirv-as for assembling SPIR-V
+find_program(SPIRV_AS spirv-as)
+if(NOT SPIRV_AS)
+  message(FATAL_ERROR "spirv-as not found. Install spirv-tools or set SPIRV_AS.")
+endif()
+
 # Custom command to generate shaders.gen.h using Perl script
 add_custom_command(
   OUTPUT ${CMAKE_SOURCE_DIR}/src/shaders.gen.h
-  COMMAND ${PERL_EXECUTABLE} ${CMAKE_SOURCE_DIR}/generate_shaders.pl ${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/src/shaders.gen.h
+  COMMAND ${CMAKE_COMMAND} -E env SPIRV_AS=${SPIRV_AS}
+          ${PERL_EXECUTABLE} ${CMAKE_SOURCE_DIR}/generate_shaders.pl ${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/src/shaders.gen.h
   DEPENDS ${ShaderSources} ${CMAKE_SOURCE_DIR}/generate_shaders.pl
   COMMENT "Generating shader header file with Perl"
   VERBATIM
@@ -48,7 +55,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR} ${CMAKE_MODULE_PATH})
 set(CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR} ${CMAKE_PREFIX_PATH})
 
 # Find packages before using them
-find_package(OpenGL REQUIRED)
+find_package(Vulkan REQUIRED)
 find_package(SDL3 CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
 find_package(stb CONFIG REQUIRED)
@@ -98,7 +105,7 @@ endif()
 # Link libraries to target
 target_link_libraries(Milton
   PRIVATE
-  OpenGL::OpenGL
+  Vulkan::Vulkan
   SDL3::Headers
   SDL3::SDL3
   imgui::imgui

@@ -1,15 +1,8 @@
 #!/usr/bin/env perl
 # Shader code generator for Milton
-# 
-# This Perl script replaces the previous C++ shadergen tool. It reads GLSL 
-# shader files and generates a C++ header (shaders.gen.h) with embedded 
-# shader source code as string literals.
 #
-# Benefits over the C++ version:
-# - No separate compilation step needed
-# - Perl is already a build dependency
-# - Easier to maintain and modify
-# - Standard, mainstream approach
+# This Perl script assembles SPIR-V from .spvasm and embeds bytecode in a C++
+# header (shaders.gen.h).
 #
 # Usage: ./generate_shaders.pl <source_dir> <output_file>
 
@@ -17,100 +10,111 @@ use strict;
 use warnings;
 use FindBin;
 use File::Basename;
-
 my $source_dir = $ARGV[0] || die "Usage: $0 <source_dir> <output_file>\n";
 my $output_file = $ARGV[1] || die "Usage: $0 <source_dir> <output_file>\n";
+my $spirv_as = $ENV{SPIRV_AS} || "spirv-as";
 
-# Shader files to process (path relative to source_dir, optional prelude file)
+# SPIR-V assembly files to process (path relative to source_dir)
 my @shaders = (
-    ['picker.v.glsl'],
-    ['picker.f.glsl'],
-    ['layer_blend.v.glsl'],
-    ['layer_blend.f.glsl'],
-    ['simple.v.glsl'],
-    ['simple.f.glsl'],
-    ['outline.v.glsl'],
-    ['outline.f.glsl'],
-    ['stroke_raster.v.glsl', 'common.glsl'],
-    ['stroke_raster.f.glsl', 'common.glsl'],
-    ['stroke_eraser.f.glsl', 'common.glsl'],
-    ['stroke_info.f.glsl', 'common.glsl'],
-    ['stroke_fill.f.glsl', 'common.glsl'],
-    ['stroke_clear.f.glsl', 'common.glsl'],
-    ['stroke_debug.f.glsl', 'common.glsl'],
-    ['exporter_rect.f.glsl'],
-    ['texture_fill.f.glsl'],
-    ['quad.v.glsl'],
-    ['quad.f.glsl'],
-    ['postproc.f.glsl'],
-    ['blur.f.glsl'],
+    ['picker.v.spvasm'],
+    ['picker.f.spvasm'],
+    ['layer_blend.v.spvasm'],
+    ['layer_blend.f.spvasm'],
+    ['simple.v.spvasm'],
+    ['simple.f.spvasm'],
+    ['outline.v.spvasm'],
+    ['outline.f.spvasm'],
+    ['stroke_raster.v.spvasm'],
+    ['stroke_raster.f.spvasm'],
+    ['stroke_eraser.f.spvasm'],
+    ['stroke_info.f.spvasm'],
+    ['stroke_fill.f.spvasm'],
+    ['stroke_clear.f.spvasm'],
+    ['stroke_debug.f.spvasm'],
+    ['exporter_rect.f.spvasm'],
+    ['texture_fill.v.spvasm'],
+    ['texture_fill.f.spvasm'],
+    ['quad.v.spvasm'],
+    ['quad.f.spvasm'],
+    ['postproc.f.spvasm'],
+    ['blur.f.spvasm'],
 );
-
-sub read_shader_file {
-    my ($filepath) = @_;
-    open(my $fh, '<', $filepath) or die "Cannot open shader file '$filepath': $!\n";
-    my @lines = <$fh>;
-    close($fh);
-    return @lines;
-}
 
 sub shader_to_varname {
     my ($filename) = @_;
     my $basename = basename($filename);
-    # Convert "shader.v.glsl" to "g_shader_v"
-    $basename =~ s/\.glsl$//;
+    # Convert "shader.v.spvasm" to "g_shader_v"
+    $basename =~ s/\.spvasm$//;
     $basename =~ s/\./_/;
     return "g_$basename";
 }
 
-sub escape_line {
-    my ($line) = @_;
-    chomp($line);
-    $line =~ s/\r//g;  # Remove carriage returns
-    $line =~ s/"/Q/g;  # Replace quotes with 'Q' (shadergen compatibility)
-    return $line;
+sub read_spirv_words {
+    my ($filepath) = @_;
+    open(my $fh, '<:raw', $filepath) or die "Cannot open SPIR-V file '$filepath': $!\n";
+    my $data;
+    read($fh, $data, -s $fh);
+    close($fh);
+    my $len = length($data);
+    die "SPIR-V bytecode length not multiple of 4 for '$filepath'\n" if ($len % 4) != 0;
+    my @words = unpack("V*", $data);
+    return @words;
 }
 
-# Generate the header file
-open(my $out, '>', $output_file) or die "Cannot write to '$output_file': $!\n";
+# Ensure assembler exists before touching output.
+if (system("$spirv_as --version > /dev/null 2>&1") != 0) {
+    die "spirv-as not found. Set SPIRV_AS or install spirv-tools.\n";
+}
+
+# Generate the header file (write to temp, rename on success)
+my $tmp_output = "$output_file.tmp";
+open(my $out, '>', $tmp_output) or die "Cannot write to '$tmp_output': $!\n";
 
 print STDERR "Generating shader code to $output_file...\n";
 
+print $out "#pragma once\n";
+print $out "#include <cstddef>\n\n";
+
 foreach my $shader_info (@shaders) {
-    my ($shader_file, $prelude_file) = @$shader_info;
+    my ($shader_file) = @$shader_info;
     my $shader_path = "$source_dir/$shader_file";
     
     my $varname = shader_to_varname($shader_file);
-    
-    print $out "static char ${varname}[] = \n";
-    
-    # If there's a prelude file, include it first
-    if ($prelude_file) {
-        my $prelude_path = "$source_dir/$prelude_file";
-        if (-f $prelude_path) {
-            my @prelude_lines = read_shader_file($prelude_path);
-            foreach my $line (@prelude_lines) {
-                my $escaped = escape_line($line);
-                print $out "\"${escaped}\\n\"\n";
+
+    if (-f $shader_path) {
+        my $spv_path = "$output_file.$shader_file.spv";
+        my $cmd = "$spirv_as \"$shader_path\" -o \"$spv_path\"";
+        my $ret = system($cmd);
+        if ($ret != 0) {
+            die "SPIR-V assembly failed for '$shader_file'\n";
+        }
+
+        my @words = read_spirv_words($spv_path);
+        unlink $spv_path;
+
+        my $spv_var = "${varname}_spv";
+        print $out "static const unsigned int ${spv_var}[] = {\n";
+        my $col = 0;
+        foreach my $w (@words) {
+            printf $out "0x%08x,", $w;
+            $col++;
+            if ($col >= 8) {
+                print $out "\n";
+                $col = 0;
+            } else {
+                print $out " ";
             }
         }
-    }
-    
-    # Read and output the main shader
-    if (-f $shader_path) {
-        my @lines = read_shader_file($shader_path);
-        foreach my $line (@lines) {
-            my $escaped = escape_line($line);
-            print $out "\"${escaped}\\n\"\n";
-        }
+        print $out "\n};\n";
+        print $out "static const size_t ${spv_var}_size = sizeof(${spv_var});\n\n";
     } else {
-        warn "Warning: Shader file '$shader_path' not found\n";
+        warn "Warning: SPIR-V file '$shader_path' not found\n";
+        next;
     }
-    
-    print $out ";\n";
 }
 
 close($out);
+rename($tmp_output, $output_file) or die "Cannot replace '$output_file': $!\n";
 
 print STDERR "Shaders generated OK\n";
 exit 0;

@@ -197,9 +197,6 @@ enum YesNoCancelAnswer
 };
 YesNoCancelAnswer platform_dialog_yesnocancel(char* info, char* title);
 
-void*   platform_get_gl_proc(char* name);
-void    platform_load_gl_func_pointers();
-
 void    platform_fname_at_exe(PATH_CHAR* fname, size_t len);
 b32     platform_move_file(PATH_CHAR* src, PATH_CHAR* dest);
 

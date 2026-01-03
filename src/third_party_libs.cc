@@ -16,15 +16,8 @@
     #include "easytab.h"
 
     // ImGui backends
-    #define IMGUI_IMPL_OPENGL_LOADER_CUSTOM
-
-    // X11 headers define Status as int which conflicts with ImGui's tex->Status
-    #ifdef Status
-    #undef Status
-    #endif
-
-    #include <imgui_impl_opengl3.cpp>
     #include <imgui_impl_sdl3.cpp>
+    #include <imgui_impl_vulkan.cpp>
 
 #if defined(_WIN32)
 #pragma warning(pop)

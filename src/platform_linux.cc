@@ -386,12 +386,6 @@ platform_get_walltime()
     return wt;
 }
 
-void*
-platform_get_gl_proc(char* name)
-{
-    return glXGetProcAddressARB((GLubyte*)name);
-}
-
 void
 platform_deinit(PlatformState* platform)
 {

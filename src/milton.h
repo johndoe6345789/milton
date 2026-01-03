@@ -19,13 +19,6 @@
 #define HOVER_FLASH_THRESHOLD_MS    500  // How long does the hidden brush hover show when it has changed size.
 #define MODE_STACK_MAX 64
 
-struct MiltonGLState
-{
-    GLuint quad_program;
-    GLuint texture;
-    GLuint vbo;
-};
-
 enum class MiltonMode
 {
     PEN,
@@ -224,7 +217,6 @@ struct Milton
     Arena       canvas_arena;   // Gets reset every canvas.
 
     // Subsystems
-    MiltonGLState* gl;
     MiltonGui* gui;
     MiltonSettings* settings;  // User settings
     MiltonPersist* persist;
@@ -318,8 +310,6 @@ void milton_save_postlude(Milton* milton);
 
 void milton_reset_canvas(Milton* milton);
 void milton_reset_canvas_and_set_default(Milton* milton);
-
-void milton_gl_backend_draw(Milton* milton);
 
 b32 current_mode_is_for_drawing(Milton const* milton);
 
