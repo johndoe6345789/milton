@@ -28,8 +28,8 @@ constexpr const T& min(const T& a, const T& b) {
 }
 
 template <typename A, typename B>
-constexpr std::common_type_t<A, B> min(A a, B b) {
-    using C = std::common_type_t<A, B>;
+constexpr typename std::common_type<A, B>::type min(A a, B b) {
+    using C = typename std::common_type<A, B>::type;
     return (static_cast<C>(a) < static_cast<C>(b)) ? static_cast<C>(a) : static_cast<C>(b);
 }
 
@@ -39,8 +39,8 @@ constexpr const T& max(const T& a, const T& b) {
 }
 
 template <typename A, typename B>
-constexpr std::common_type_t<A, B> max(A a, B b) {
-    using C = std::common_type_t<A, B>;
+constexpr typename std::common_type<A, B>::type max(A a, B b) {
+    using C = typename std::common_type<A, B>::type;
     return (static_cast<C>(a) < static_cast<C>(b)) ? static_cast<C>(b) : static_cast<C>(a);
 }
 

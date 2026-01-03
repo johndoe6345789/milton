@@ -14,7 +14,7 @@ namespace vk {
 Context g_vk_context = {};
 
 void log(const char* message) {
-    milton_log(message);
+    milton_log("%s", message);
 }
 
 static const char* validation_layers[] = {
