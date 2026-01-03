@@ -419,8 +419,7 @@ static void upload_buffer(vk::Buffer* buffer, const void* data, size_t size)
 
 static void wait_for_gpu_idle()
 {
-    VkFence in_flight_fence = vk::g_vk_context.in_flight_fences[vk::g_vk_context.current_frame];
-    vkWaitForFences(vk::g_vk_context.device, 1, &in_flight_fence, VK_TRUE, UINT64_MAX);
+    vkDeviceWaitIdle(vk::g_vk_context.device);
 }
 
 static bool create_or_resize_buffer(vk::Buffer* buffer, VkDeviceSize size, VkBufferUsageFlags usage)
@@ -1788,14 +1787,10 @@ void gpu_render(RenderBackend* renderer, i32 view_x, i32 view_y, i32 view_width,
         return;
     }
     
-    // Wait for previous frame
-    VkFence in_flight_fence = vk::g_vk_context.in_flight_fences[vk::g_vk_context.current_frame];
-    vkWaitForFences(vk::g_vk_context.device, 1, &in_flight_fence, VK_TRUE, UINT64_MAX);
-    
     // Acquire next image
     uint32_t image_index;
-    VkSemaphore image_available = vk::g_vk_context.image_available_semaphores[vk::g_vk_context.current_frame];
-    VkSemaphore render_finished = vk::g_vk_context.render_finished_semaphores[vk::g_vk_context.current_frame];
+    VkSemaphore image_available =
+        vk::g_vk_context.image_available_semaphores[vk::g_vk_context.current_frame];
     VkResult result = vkAcquireNextImageKHR(vk::g_vk_context.device, vk::g_vk_context.swapchain,
                                            UINT64_MAX, image_available,
                                            VK_NULL_HANDLE, &image_index);
@@ -1810,9 +1805,11 @@ void gpu_render(RenderBackend* renderer, i32 view_x, i32 view_y, i32 view_width,
         vkWaitForFences(vk::g_vk_context.device, 1,
                         &vk::g_vk_context.images_in_flight[image_index], VK_TRUE, UINT64_MAX);
     }
+    VkFence in_flight_fence =
+        vk::g_vk_context.in_flight_fences[vk::g_vk_context.current_frame];
     vk::g_vk_context.images_in_flight[image_index] = in_flight_fence;
-
     vkResetFences(vk::g_vk_context.device, 1, &in_flight_fence);
+    VkSemaphore render_finished = vk::g_vk_context.render_finished_semaphores[image_index];
     
     // Record command buffer
     VkCommandBuffer cmd = renderer->command_buffers[image_index];

@@ -40,8 +40,8 @@ struct Context {
     // Synchronization
     static const uint32_t kMaxFramesInFlight = 2;
     VkSemaphore image_available_semaphores[kMaxFramesInFlight];
-    VkSemaphore render_finished_semaphores[kMaxFramesInFlight];
     VkFence in_flight_fences[kMaxFramesInFlight];
+    VkSemaphore render_finished_semaphores[8];
     VkFence images_in_flight[8];
     
     uint32_t current_frame;

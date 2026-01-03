@@ -515,8 +515,6 @@ static bool create_sync_objects() {
     for (uint32_t i = 0; i < Context::kMaxFramesInFlight; ++i) {
         if (vkCreateSemaphore(g_vk_context.device, &semaphore_info, nullptr,
                               &g_vk_context.image_available_semaphores[i]) != VK_SUCCESS ||
-            vkCreateSemaphore(g_vk_context.device, &semaphore_info, nullptr,
-                              &g_vk_context.render_finished_semaphores[i]) != VK_SUCCESS ||
             vkCreateFence(g_vk_context.device, &fence_info, nullptr,
                           &g_vk_context.in_flight_fences[i]) != VK_SUCCESS) {
             vk::log("Failed to create synchronization objects\n");
@@ -525,6 +523,11 @@ static bool create_sync_objects() {
     }
 
     for (uint32_t i = 0; i < g_vk_context.swapchain_image_count; ++i) {
+        if (vkCreateSemaphore(g_vk_context.device, &semaphore_info, nullptr,
+                              &g_vk_context.render_finished_semaphores[i]) != VK_SUCCESS) {
+            vk::log("Failed to create synchronization objects\n");
+            return false;
+        }
         g_vk_context.images_in_flight[i] = VK_NULL_HANDLE;
     }
 
@@ -559,8 +562,10 @@ void cleanup() {
         
         for (uint32_t i = 0; i < Context::kMaxFramesInFlight; ++i) {
             vkDestroySemaphore(g_vk_context.device, g_vk_context.image_available_semaphores[i], nullptr);
-            vkDestroySemaphore(g_vk_context.device, g_vk_context.render_finished_semaphores[i], nullptr);
             vkDestroyFence(g_vk_context.device, g_vk_context.in_flight_fences[i], nullptr);
+        }
+        for (uint32_t i = 0; i < g_vk_context.swapchain_image_count; ++i) {
+            vkDestroySemaphore(g_vk_context.device, g_vk_context.render_finished_semaphores[i], nullptr);
         }
 
         if (g_vk_context.pipeline_cache != VK_NULL_HANDLE) {
