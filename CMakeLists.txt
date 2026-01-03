@@ -51,8 +51,16 @@ target_include_directories(Milton PRIVATE
 )
 
 # Find packages first to get their variables
-set(CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR} ${CMAKE_MODULE_PATH})
-set(CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR} ${CMAKE_PREFIX_PATH})
+set(CMAKE_MODULE_PATH
+  "${CMAKE_BINARY_DIR}"
+  "${CMAKE_BINARY_DIR}/generators"
+  ${CMAKE_MODULE_PATH}
+)
+set(CMAKE_PREFIX_PATH
+  "${CMAKE_BINARY_DIR}"
+  "${CMAKE_BINARY_DIR}/generators"
+  ${CMAKE_PREFIX_PATH}
+)
 
 # Find packages before using them
 find_package(Vulkan REQUIRED)
