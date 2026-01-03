@@ -75,30 +75,23 @@ xcode-select --install
 - Visual Studio 2015+ with C++ support
 - Or MinGW with GCC
 
-### Step 1: Create Build Directory
+### Step 1: Install Dependencies with Conan
 
 ```bash
 cd /path/to/milton
-mkdir -p build
-cd build
-```
-
-**Note**: In-source builds are not allowed. The CMakeLists.txt enforces using a separate `build` directory.
-
-### Step 2: Install Dependencies with Conan
-
-```bash
-conan install ..
+conan install .
 ```
 
 This will:
+- Create a `build` directory automatically
 - Download SDL 3.2.20 and its dependencies
 - Generate CMake configuration files (`CMakeDeps`, `CMakeToolchain`)
 - Create build environment scripts (`conanbuild.sh`, `conanrun.sh`)
 
-### Step 3: Configure with CMake
+### Step 2: Configure with CMake
 
 ```bash
+cd build
 # Using Conan's preset (requires CMake 3.23+)
 cmake .. --preset conan-release
 
@@ -106,7 +99,7 @@ cmake .. --preset conan-release
 cmake .. -G "Unix Makefiles" -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release
 ```
 
-### Step 4: Build
+### Step 3: Build
 
 ```bash
 cmake --build . -- -j$(nproc)
@@ -114,7 +107,7 @@ cmake --build . -- -j$(nproc)
 make -j$(nproc)
 ```
 
-### Step 5: Run
+### Step 4: Run
 
 ```bash
 ./Milton
