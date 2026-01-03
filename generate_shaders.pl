@@ -42,7 +42,7 @@ my @shaders = (
     ['texture_fill.f.glsl'],
     ['quad.v.glsl'],
     ['quad.f.glsl'],
-    ['postproc.f.glsl', '../third_party/Fxaa3_11.f.glsl'],
+    ['postproc.f.glsl'],
     ['blur.f.glsl'],
 );
 
