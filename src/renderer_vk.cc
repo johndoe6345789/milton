@@ -1786,7 +1786,14 @@ void gpu_render(RenderBackend* renderer, i32 view_x, i32 view_y, i32 view_width,
     if (!renderer->initialized) {
         return;
     }
-    
+
+    // Wait for the current frame's resources to be available
+    // This ensures that:
+    // 1. The fence from 2 frames ago is signaled (safe to reset)
+    // 2. The semaphores from 2 frames ago are no longer in use (safe to signal)
+    VkFence in_flight_fence = vk::g_vk_context.in_flight_fences[vk::g_vk_context.current_frame];
+    vkWaitForFences(vk::g_vk_context.device, 1, &in_flight_fence, VK_TRUE, UINT64_MAX);
+
     // Acquire next image
     uint32_t image_index;
     VkSemaphore image_available =
@@ -1805,8 +1812,6 @@ void gpu_render(RenderBackend* renderer, i32 view_x, i32 view_y, i32 view_width,
         vkWaitForFences(vk::g_vk_context.device, 1,
                         &vk::g_vk_context.images_in_flight[image_index], VK_TRUE, UINT64_MAX);
     }
-    VkFence in_flight_fence =
-        vk::g_vk_context.in_flight_fences[vk::g_vk_context.current_frame];
     vk::g_vk_context.images_in_flight[image_index] = in_flight_fence;
     vkResetFences(vk::g_vk_context.device, 1, &in_flight_fence);
     VkSemaphore render_finished = vk::g_vk_context.render_finished_semaphores[image_index];
