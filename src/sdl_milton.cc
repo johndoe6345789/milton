@@ -214,6 +214,8 @@ sdl_event_loop(Milton* milton, PlatformState* platform)
     milton_input.mode_to_set = MiltonMode::MODE_COUNT;
 
     b32 pointer_up = false;
+    b32 pointer_up_has_point = false;
+    v2i pointer_up_point = {};
 
     v2i input_point = {};
 
@@ -251,7 +253,7 @@ sdl_event_loop(Milton* milton, PlatformState* platform)
                     break;
                 }
 
-                if (   (event.button.button == SDL_BUTTON_LEFT && ( EasyTab == NULL || !EasyTab->PenInProximity))
+                if (   event.button.button == SDL_BUTTON_LEFT
                      || event.button.button == SDL_BUTTON_MIDDLE
                      // Ignoring right click events for now
                      /*|| event.button.button == SDL_BUTTON_RIGHT*/ ) {
@@ -265,7 +267,7 @@ sdl_event_loop(Milton* milton, PlatformState* platform)
 
                     v2i point = v2i{(int)long_point.x, (int)long_point.y};
 
-                    if ( !platform->is_panning && point.x >= 0 && point.y > 0 ) {
+                        if ( !platform->is_panning && point.x >= 0 && point.y >= 0 ) {
                         milton_input.click = point;
 
                         platform->is_pointer_down = true;
@@ -296,6 +298,11 @@ sdl_event_loop(Milton* milton, PlatformState* platform)
                         platform->force_next_frame = true;
                     }
                     pointer_up = true;
+                    pointer_up_has_point = true;
+                    pointer_up_point = {
+                        static_cast<i32>(event.button.x),
+                        static_cast<i32>(event.button.y)
+                    };
                     milton_input.flags |= MiltonInputFlags_CLICKUP;
                     milton_input.flags |= MiltonInputFlags_END_STROKE;
                 }
@@ -318,16 +325,14 @@ sdl_event_loop(Milton* milton, PlatformState* platform)
                 // overflowing ;)) then we default to receiving WM_MOUSEMOVE. If we catch a single
                 // point, then it's fine. It will get filtered out in milton_stroke_input
 
-                if (EasyTab == NULL || !EasyTab->PenInProximity) {
-                    if (platform->is_pointer_down) {
-                        if (!platform->is_panning &&
-                            (input_point.x >= 0 && input_point.y >= 0)) {
-                            if (platform->num_point_results < MAX_INPUT_BUFFER_ELEMS) {
-                                milton_input.points[platform->num_point_results++] = VEC2L(input_point);
-                            }
-                            if (platform->num_pressure_results < MAX_INPUT_BUFFER_ELEMS) {
-                                milton_input.pressures[platform->num_pressure_results++] = NO_PRESSURE_INFO;
-                            }
+                if (platform->is_pointer_down) {
+                    if (!platform->is_panning &&
+                        (input_point.x >= 0 && input_point.y >= 0)) {
+                        if (platform->num_point_results < MAX_INPUT_BUFFER_ELEMS) {
+                            milton_input.points[platform->num_point_results++] = VEC2L(input_point);
+                        }
+                        if (platform->num_pressure_results < MAX_INPUT_BUFFER_ELEMS) {
+                            milton_input.pressures[platform->num_pressure_results++] = NO_PRESSURE_INFO;
                         }
                     }
                 }
@@ -421,10 +426,9 @@ sdl_event_loop(Milton* milton, PlatformState* platform)
         // Add final point
         if ( !platform->is_panning && platform->is_pointer_down ) {
             milton_input.flags |= MiltonInputFlags_END_STROKE;
-            input_point = {
-                static_cast<i32>(event.button.x),
-                static_cast<i32>(event.button.y)
-            };
+            if ( pointer_up_has_point ) {
+                input_point = pointer_up_point;
+            }
 
             platform_point_to_pixel_i(platform, &input_point);
 

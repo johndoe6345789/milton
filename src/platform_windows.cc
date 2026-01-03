@@ -361,17 +361,53 @@ platform_ui_scale(PlatformState* p)
 
 void    platform_point_to_pixel(PlatformState* ps, v2l* inout)
 {
+    if (ps == NULL || ps->window == NULL || inout == NULL) {
+        return;
+    }
 
+    int win_w = 0;
+    int win_h = 0;
+    int pixel_w = 0;
+    int pixel_h = 0;
+
+    SDL_GetWindowSize(ps->window, &win_w, &win_h);
+    SDL_GetWindowSizeInPixels(ps->window, &pixel_w, &pixel_h);
+
+    if (win_w > 0 && win_h > 0 && pixel_w > 0 && pixel_h > 0) {
+        inout->x = (inout->x * (i64)pixel_w) / win_w;
+        inout->y = (inout->y * (i64)pixel_h) / win_h;
+    }
 }
 
 void    platform_point_to_pixel_i(PlatformState* ps, v2i* inout)
 {
-
+    if (inout == NULL) {
+        return;
+    }
+    v2l long_inout = { inout->x, inout->y };
+    platform_point_to_pixel(ps, &long_inout);
+    inout->x = (i32)long_inout.x;
+    inout->y = (i32)long_inout.y;
 }
 
 void    platform_pixel_to_point(PlatformState* ps, v2l* inout)
 {
+    if (ps == NULL || ps->window == NULL || inout == NULL) {
+        return;
+    }
 
+    int win_w = 0;
+    int win_h = 0;
+    int pixel_w = 0;
+    int pixel_h = 0;
+
+    SDL_GetWindowSize(ps->window, &win_w, &win_h);
+    SDL_GetWindowSizeInPixels(ps->window, &pixel_w, &pixel_h);
+
+    if (win_w > 0 && win_h > 0 && pixel_w > 0 && pixel_h > 0) {
+        inout->x = (inout->x * (i64)win_w) / pixel_w;
+        inout->y = (inout->y * (i64)win_h) / pixel_h;
+    }
 }
 
 void
