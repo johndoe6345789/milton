@@ -8,9 +8,6 @@
 
 #include "milton.h"
 #include "vk.h"
-#include "gui.h"
-#include "persist.h"
-#include "bindings.h"
 
 
 static void

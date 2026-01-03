@@ -5,7 +5,8 @@
 #pragma once
 
 #include "common.h"
-#include "memory.h"
+#include "modern/core/arena.h"
+#include "modern/core/memory_compat.h"
 
 #include "system_includes.h"
 #include "utils.h"

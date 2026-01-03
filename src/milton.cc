@@ -4,15 +4,10 @@
 #include "milton.h"
 
 #include "common.h"
-#include "color.h"
-#include "canvas.h"
-#include "gui.h"
 #include "renderer.h"
 #include "localization.h"
-#include "persist.h"
 #include "platform.h"
 #include "vector.h"
-#include "bindings.h"
 
 // Defined below.
 static void milton_validate(Milton* milton);
@@ -1098,7 +1093,7 @@ milton_validate(Milton* milton)
 
     i64 history_count = 0;
     for ( i64 hi = 0; hi < milton->canvas->history.count; ++hi ) {
-        i32 id = milton->canvas->history.data[hi].layer_id;
+        i32 id = milton->canvas->history[hi].layer_id;
         for ( i64 li = 0; li < num_layers; ++li ) {
             if ( id == layer_ids[li] ) {
                 ++history_count;

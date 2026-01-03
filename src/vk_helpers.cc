@@ -2,7 +2,8 @@
 // License: https://github.com/serge-rgb/milton#license
 
 #include "vk.h"
-#include "memory.h"
+#include "modern/core/arena.h"
+#include "modern/core/memory_compat.h"
 #include "platform.h"
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>

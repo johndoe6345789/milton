@@ -5,9 +5,7 @@
 
 #include "shaders.gen.h"
 
-#include "color.h"
 #include "vk.h"
-#include "gui.h"
 #include "milton.h"
 #include "vector.h"
 #include "utils.h"
@@ -1900,7 +1898,7 @@ void gpu_render(RenderBackend* renderer, i32 view_x, i32 view_y, i32 view_width,
                                 &renderer->stroke_set, 0, nullptr);
 
         for (i64 i = 0; i < renderer->clip_array.count; ++i) {
-            RenderElement* re = renderer->clip_array.data[i];
+            RenderElement* re = renderer->clip_array[i];
             if (!re || re->index_count == 0) {
                 continue;
             }

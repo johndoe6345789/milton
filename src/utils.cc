@@ -6,7 +6,8 @@
 
 #include "common.h"
 #include "DArray.h"
-#include "memory.h"
+#include "modern/core/arena.h"
+#include "modern/core/memory_compat.h"
 #include "utils.h"
 
 
@@ -260,6 +261,7 @@ rect_split(Rect** out_rects, Rect src_rect, i32 width, i32 height)
     }
 
     mlt_assert((i32)rects.count <= max_num_rects);
+    // Safe: data pointer lifetime tied to rects, caller must not modify rects after this
     *out_rects = rects.data;
     i32 num_rects = (i32)rects.count;
     return num_rects;

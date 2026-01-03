@@ -1,17 +1,13 @@
 // Copyright (c) 2015 Sergio Gonzalez. All rights reserved.
 // License: https://github.com/serge-rgb/milton#license
 
-#include "StrokeList.cc"
-#include "bindings.cc"
-#include "canvas.cc"
-#include "color.cc"
+// NOTE: Modern C++20 headers exist in src/modern/ but are not yet integrated
+// They will replace legacy code incrementally to avoid conflicts
+
+// Legacy implementations
 #include "vk_helpers.cc"
-#include "gui.cc"
 #include "localization.cc"
-#include "memory.cc"
 #include "milton.cc"
-#include "persist.cc"
-#include "profiler.cc"
 #include "renderer_vk.cc"
 #include "sdl_milton.cc"
 #include "utils.cc"

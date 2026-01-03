@@ -134,20 +134,42 @@ endif()
 
 if(UNIX)
   target_compile_options(Milton PRIVATE
-    -std=c++11
+    -std=c++20
+    -Wall
+    -Wextra
+    -Wpedantic
     -Wno-missing-braces
-    -Wno-unused-function
-    -Wno-unused-variable
-    -Wno-unused-result
-    -Wno-write-strings
-    -Wno-null-dereference
-    -Wno-format
-    -fno-strict-aliasing
     -fno-omit-frame-pointer
   )
 
   if(APPLE)
     target_compile_options(Milton PRIVATE -ObjC++)
+  endif()
+  
+  # Add sanitizers for debug builds
+  if(CMAKE_BUILD_TYPE MATCHES "Debug")
+    target_compile_options(Milton PRIVATE
+      -fsanitize=address
+      -fsanitize=undefined
+      -fsanitize=thread
+      -fno-omit-frame-pointer
+      -g
+    )
+    target_link_options(Milton PRIVATE
+      -fsanitize=address
+      -fsanitize=undefined
+      -fsanitize=thread
+    )
+  endif()
+elseif(MSVC)
+  target_compile_options(Milton PRIVATE
+    /std:c++20
+    /W4
+  )
+  
+  # Add sanitizers for debug builds on Windows
+  if(CMAKE_BUILD_TYPE MATCHES "Debug")
+    target_compile_options(Milton PRIVATE /fsanitize=address)
   endif()
 endif()
 

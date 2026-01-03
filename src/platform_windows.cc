@@ -4,7 +4,8 @@
 
 #include "platform.h"
 
-#include "memory.h"
+#include "modern/core/arena.h"
+#include "modern/core/memory_compat.h"
 
 extern "C" {
 

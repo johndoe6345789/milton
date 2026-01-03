@@ -4,7 +4,8 @@
 #include "platform.h"
 
 #include "common.h"
-#include "memory.h"
+#include "modern/core/arena.h"
+#include "modern/core/memory_compat.h"
 
 #define IMPL_MISSING mlt_assert(!"IMPLEMENT")
 

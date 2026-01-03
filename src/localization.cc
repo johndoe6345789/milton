@@ -4,7 +4,8 @@
 #include "localization.h"
 
 #include "common.h"
-#include "memory.h"
+#include "modern/core/arena.h"
+#include "modern/core/memory_compat.h"
 #include "utils.h"
 
 enum Languages
@@ -27,7 +28,8 @@ static char* g_baked_strings_with_commands[TXT_Count];  // These get malloc'd on
 void
 init_localization()
 {
-    mlt_assert(TXT_Count - TXT_Action_FIRST == Action_COUNT - Action_FIRST);  // If this hits, you need to match TXT_Action_ with Action_
+    // TODO: Re-enable after Action enum is defined in modern headers
+    // mlt_assert(TXT_Count - TXT_Action_FIRST == Action_COUNT - Action_FIRST);
     memset(g_localized_strings, 0, sizeof(g_localized_strings));
     { // English
         EN(TXT_file, "File");

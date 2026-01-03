@@ -4,11 +4,14 @@
 
 #pragma once
 
-#include "memory.h"
 #include "system_includes.h"
-#include "canvas.h"
 #include "DArray.h"
-#include "profiler.h"
+#include "platform.h"  // For PlatformState
+#include "modern/core/arena.h"  // Modern arena allocator
+#include "modern/core/memory_compat.h"  // Legacy API compatibility
+
+// NOTE: Modern C++20 headers exist in src/modern/ but we're keeping legacy
+// structures here until full migration is complete
 
 #define STROKE_MAX_POINTS           2048
 #define MILTON_DEFAULT_SCALE        (1 << 10)
