@@ -7,10 +7,40 @@ Milton is a paint application with tablet support, recently upgraded to **SDL 3.
 ### Required Tools
 - **CMake** 3.16 or higher
 - **Conan** 2.0+ (package manager)
+- **Perl** 5.10+ (required for build scripts)
 - **C++ Compiler** with C++11 support (GCC 15+ recommended for Linux)
 - **OpenGL** development libraries
 
-### System Dependencies
+### Perl Modules
+Several Perl modules are required for the build process:
+- `File::Basename`
+- `File::Copy`
+- `File::Spec`
+- `Text::Wrap`
+- Additional standard library modules
+
+To install Perl modules on your system:
+
+#### Linux (Fedora/RHEL)
+```bash
+sudo dnf install perl perl-devel
+```
+
+#### Linux (Ubuntu/Debian)
+```bash
+sudo apt-get install perl perl-modules
+```
+
+#### macOS
+```bash
+# Perl comes with macOS, but you may need additional modules via CPAN
+perl -MCPAN -e shell
+```
+
+#### Windows
+Download and install ActivePerl or Strawberry Perl from [perl.org](https://www.perl.org/)
+
+### System Dependencies (after Perl/CMake/Conan installed)
 
 #### Linux (Fedora/RHEL)
 ```bash
@@ -32,8 +62,6 @@ xcode-select --install
 #### Windows
 - Visual Studio 2015+ with C++ support
 - Or MinGW with GCC
-
-## Building
 
 ### Step 1: Install Dependencies with Conan
 
