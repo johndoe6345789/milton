@@ -46,7 +46,27 @@ third_party/SDL2-*/*/Debug/*
 
 # build dir
 build/
+cmake-build-*/
 
+src/shaders.gen.h
+
+# Conan package manager
+conanfile.txt.lock
+conan.lock
+conanbuild.sh
+conanrun.sh
+*.sh
+CMakePresets.json
+cmake_paths.cmake
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+
+# Generated files
 src/shaders.gen.h
 
 # Tundra stuff
