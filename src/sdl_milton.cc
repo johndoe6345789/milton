@@ -256,32 +256,27 @@ sdl_event_loop(Milton* milton, PlatformState* platform)
                      // Ignoring right click events for now
                      /*|| event.button.button == SDL_BUTTON_RIGHT*/ ) {
 
-                    if ( ImGui::GetIO().WantCaptureMouse ) {
-                        platform->force_next_frame = true;
-                    }
-                    else {
-                        v2l long_point = {
-                            static_cast<i64>(event.button.x),
-                            static_cast<i64>(event.button.y)
-                        };
+                    v2l long_point = {
+                        static_cast<i64>(event.button.x),
+                        static_cast<i64>(event.button.y)
+                    };
 
-                        platform_point_to_pixel(platform, &long_point);
+                    platform_point_to_pixel(platform, &long_point);
 
-                        v2i point = v2i{(int)long_point.x, (int)long_point.y};
+                    v2i point = v2i{(int)long_point.x, (int)long_point.y};
 
-                        if ( !platform->is_panning && point.x >= 0 && point.y > 0 ) {
-                            milton_input.click = point;
+                    if ( !platform->is_panning && point.x >= 0 && point.y > 0 ) {
+                        milton_input.click = point;
 
-                            platform->is_pointer_down = true;
-                            platform->pointer = point;
-                            platform->is_middle_button_down = (event.button.button == SDL_BUTTON_MIDDLE);
+                        platform->is_pointer_down = true;
+                        platform->pointer = point;
+                        platform->is_middle_button_down = (event.button.button == SDL_BUTTON_MIDDLE);
 
-                            if ( platform->num_point_results < MAX_INPUT_BUFFER_ELEMS ) {
-                                milton_input.points[platform->num_point_results++] = VEC2L(point);
-                            }
-                            if ( platform->num_pressure_results < MAX_INPUT_BUFFER_ELEMS ) {
-                                milton_input.pressures[platform->num_pressure_results++] = NO_PRESSURE_INFO;
-                            }
+                        if ( platform->num_point_results < MAX_INPUT_BUFFER_ELEMS ) {
+                            milton_input.points[platform->num_point_results++] = VEC2L(point);
+                        }
+                        if ( platform->num_pressure_results < MAX_INPUT_BUFFER_ELEMS ) {
+                            milton_input.pressures[platform->num_pressure_results++] = NO_PRESSURE_INFO;
                         }
                     }
                 }
