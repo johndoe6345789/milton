@@ -837,21 +837,15 @@ milton_main(bool is_fullscreen, char* file_to_open)
         // Reset pan_start. Delta is not cumulative.
         platform.pan_start = platform.pan_point;
 
+        // Finalize ImGui draw data before rendering.
+        ImGui::Render();
+
         // ==== Update and render
         PROFILE_GRAPH_END(polling);
         PROFILE_GRAPH_BEGIN(GL);
         milton_update_and_render(milton, &milton_input);
         if ( !(milton->flags & MiltonStateFlags_RUNNING) ) {
             platform.should_quit = true;
-        }
-        
-        // Render ImGui on top
-        {
-            ImGuiIO& io = ImGui::GetIO(); (void)io;
-            ImGui::Render();
-            
-            // ImGui will be rendered to the command buffer in gpu_render
-            // The actual Vulkan present happens in gpu_render's command submission
         }
         PROFILE_GRAPH_END(GL);
         PROFILE_GRAPH_BEGIN(system);
