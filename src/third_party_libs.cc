@@ -5,27 +5,26 @@
 #pragma warning(push,0)
 #endif
 
-    #include "imgui.cpp"
-    #include "imgui_widgets.cpp"
-    #include "imgui_draw.cpp"
-    // ImGui SDL and OpenGL backends are compiled separately in CMakeLists.txt
+    // All third-party libraries now come from Conan
 
-    extern "C"
-    {
+    // STB image write implementation
+    #define STB_IMAGE_WRITE_IMPLEMENTATION
+    #include <stb_image_write.h>
 
+    // EasyTab implementation (header-only library for tablet input)
     #define EASYTAB_IMPLEMENTATION
     #include "easytab.h"
 
-    #define STB_IMAGE_IMPLEMENTATION
-    #include "stb_image.h"
+    // ImGui backends
+    #define IMGUI_IMPL_OPENGL_LOADER_CUSTOM
 
-    #define STB_IMAGE_WRITE_IMPLEMENTATION
-    #include "stb_image_write.h"
+    // X11 headers define Status as int which conflicts with ImGui's tex->Status
+    #ifdef Status
+    #undef Status
+    #endif
 
-    #define TJE_IMPLEMENTATION
-    #include "tiny_jpeg.h"
-
-    }
+    #include <imgui_impl_opengl3.cpp>
+    #include <imgui_impl_sdl3.cpp>
 
 #if defined(_WIN32)
 #pragma warning(pop)

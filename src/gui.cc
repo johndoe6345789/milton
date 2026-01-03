@@ -44,8 +44,8 @@ gui_layer_window(MiltonInput* input, PlatformState* platform, Milton* milton, f3
             height = prefs->layer_window_height;
         }
 
-        ImGui::SetNextWindowPos(ImVec2(left, top), ImGuiSetCond_FirstUseEver);
-        ImGui::SetNextWindowSize(ImVec2(width, height), ImGuiSetCond_FirstUseEver);
+        ImGui::SetNextWindowPos(ImVec2(left, top), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(width, height), ImGuiCond_FirstUseEver);
     }
 
     if ( ImGui::Begin(loc(TXT_layers)) ) {
@@ -313,8 +313,8 @@ gui_brush_window(MiltonInput* input, PlatformState* platform, Milton* milton, Pl
             height = prefs->brush_window_height;
         }
 
-        ImGui::SetNextWindowPos(ImVec2(left, top), ImGuiSetCond_FirstUseEver);
-        ImGui::SetNextWindowSize({width, height}, ImGuiSetCond_FirstUseEver);
+        ImGui::SetNextWindowPos(ImVec2(left, top), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize({width, height}, ImGuiCond_FirstUseEver);
     }
 
     // Brush Window
@@ -782,7 +782,7 @@ milton_imgui_tick(MiltonInput* input, PlatformState* platform,  Milton* milton, 
         // Settings window
         if ( show_settings ) {
             ImGui::SetNextWindowSize(ImVec2(ui_scale*400, ui_scale*400),
-                                     ImGuiSetCond_FirstUseEver);
+                                     ImGuiCond_FirstUseEver);
             if ( ImGui::Begin(loc(TXT_settings)) ) {
                 if (ImGui::Button(loc(TXT_ok))) {
                     milton_settings_save(milton->settings);
@@ -860,9 +860,9 @@ milton_imgui_tick(MiltonInput* input, PlatformState* platform,  Milton* milton, 
             {
                 Rect pb = picker_get_bounds(&gui->picker);
                 auto width = 20 + pb.right - pb.left;
-                ImGui::SetNextWindowPos(ImVec2(width, 30), ImGuiSetCond_FirstUseEver);
+                ImGui::SetNextWindowPos(ImVec2(width, 30), ImGuiCond_FirstUseEver);
             }
-            ImGui::SetNextWindowSize(ImVec2(ui_scale*500, ui_scale*100), ImGuiSetCond_FirstUseEver);
+            ImGui::SetNextWindowSize(ImVec2(ui_scale*500, ui_scale*100), ImGuiCond_FirstUseEver);
             if ( ImGui::Begin("History Slider") ) {
                 ImGui::SliderInt("History", &gui->history, 0,
                                  layer::count_strokes(milton->canvas->root_layer));
@@ -876,8 +876,8 @@ milton_imgui_tick(MiltonInput* input, PlatformState* platform,  Milton* milton, 
         bool opened = true;
         b32 reset = false;
 
-        ImGui::SetNextWindowPos(ImVec2(100, 30), ImGuiSetCond_FirstUseEver);
-        ImGui::SetNextWindowSize({ui_scale*350, ui_scale*235}, ImGuiSetCond_FirstUseEver);  // We don't want to set it *every* time, the user might have preferences
+        ImGui::SetNextWindowPos(ImVec2(100, 30), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize({ui_scale*350, ui_scale*235}, ImGuiCond_FirstUseEver);  // We don't want to set it *every* time, the user might have preferences
 
         // Export window
         if ( ImGui::Begin(loc(TXT_export_DOTS), &opened, ImGuiWindowFlags_NoCollapse) ) {
@@ -955,8 +955,8 @@ milton_imgui_tick(MiltonInput* input, PlatformState* platform,  Milton* milton, 
     } // exporting
 
 #if MILTON_ENABLE_PROFILING
-    ImGui::SetNextWindowPos(ImVec2(ui_scale*300, ui_scale*205), ImGuiSetCond_FirstUseEver);
-    ImGui::SetNextWindowSize({ui_scale*350, ui_scale*285}, ImGuiSetCond_FirstUseEver);  // We don't want to set it *every* time, the user might have preferences
+    ImGui::SetNextWindowPos(ImVec2(ui_scale*300, ui_scale*205), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize({ui_scale*350, ui_scale*285}, ImGuiCond_FirstUseEver);  // We don't want to set it *every* time, the user might have preferences
     if ( milton->viz_window_visible ) {
         bool opened = true;
         if ( ImGui::Begin("Debug Data ([BACKQUOTE] to toggle)", &opened, ImGuiWindowFlags_NoCollapse) ) {

@@ -38,17 +38,19 @@ void*
 platform_get_native_window_pointer(SDL_Window* window)
 {
     // On Linux/X11, get the X11 Window ID
-    // SDL 3 uses SDL_GetProperty with SDL_PROP_WINDOW_X11_WINDOW_POINTER
-    void* x11_window = SDL_GetProperty(window, SDL_PROP_WINDOW_X11_WINDOW_POINTER, NULL);
-    return x11_window;
+    // SDL 3 uses SDL_GetWindowProperties then SDL_GetNumberProperty for window
+    SDL_PropertiesID props = SDL_GetWindowProperties(window);
+    // SDL_PROP_WINDOW_X11_WINDOW_NUMBER returns a number, cast to void* for compatibility
+    return (void*)(uintptr_t)SDL_GetNumberProperty(props, SDL_PROP_WINDOW_X11_WINDOW_NUMBER, 0);
 }
 
 void*
 platform_get_native_display_pointer(SDL_Window* window)
 {
     // On Linux/X11, get the X11 Display pointer
-    // SDL 3 uses SDL_GetProperty with SDL_PROP_WINDOW_X11_DISPLAY_POINTER
-    void* x11_display = SDL_GetProperty(window, SDL_PROP_WINDOW_X11_DISPLAY_POINTER, NULL);
+    // SDL 3 uses SDL_GetWindowProperties then SDL_GetPointerProperty
+    SDL_PropertiesID props = SDL_GetWindowProperties(window);
+    void* x11_display = SDL_GetPointerProperty(props, SDL_PROP_WINDOW_X11_DISPLAY_POINTER, NULL);
     return x11_display;
 }
 
@@ -406,8 +408,10 @@ v2i
 platform_cursor_get_position(PlatformState* platform)
 {
     v2i pos;
-
-    SDL_GetMouseState(&pos.x, &pos.y);
+    float mx, my;
+    SDL_GetMouseState(&mx, &my);
+    pos.x = (int)mx;
+    pos.y = (int)my;
     return pos;
 }
 
@@ -417,6 +421,6 @@ platform_cursor_set_position(PlatformState* platform, v2i pos)
     SDL_WarpMouseInWindow(platform->window, pos.x, pos.y);
     // Pending mouse move events will have the cursor close
     // to where it was before we set it.
-    SDL_FlushEvent(SDL_MOUSEMOTION);
+    SDL_FlushEvent(SDL_EVENT_MOUSE_MOTION);
     // SDL_SYSWMEVENT removed in SDL 3
 }

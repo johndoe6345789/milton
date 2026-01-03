@@ -6,7 +6,6 @@
 
 #include "memory.h"
 #include "system_includes.h"
-#include "sdl3_threading_shim.h"
 #include "canvas.h"
 #include "DArray.h"
 #include "profiler.h"
@@ -179,10 +178,10 @@ struct Milton
     i32 max_height;
 
 #if MILTON_SAVE_ASYNC
-    SDL_mutex*  save_mutex;
-    i64         save_flag;   // See SaveEnum
-    SDL_cond*   save_cond;
-    SDL_Thread* save_thread;
+    SDL_Mutex*     save_mutex;
+    i64            save_flag;   // See SaveEnum
+    SDL_Condition* save_cond;
+    SDL_Thread*    save_thread;
 #endif
     PlatformState* platform;
 

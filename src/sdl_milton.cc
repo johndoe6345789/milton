@@ -3,9 +3,9 @@
 
 #define IMGUI_IMPL_OPENGL_LOADER_CUSTOM "gl.h"
 #include <imgui.h>
-// SDL 3 migration: Using ImGui SDL3 backend
-#include "imgui_impl_sdl3.h"
-#include "imgui_impl_opengl3.h"
+// SDL 3 migration: Using ImGui SDL3 backend from Conan
+#include <imgui_impl_sdl3.h>
+#include <imgui_impl_opengl3.h>
 
 #include "milton.h"
 #include "gl_helpers.h"
@@ -27,9 +27,9 @@ get_current_keyboard_layout()
     LayoutType layout = LayoutType_QWERTY;  // Default to QWERTY bindings.
 
     char keys[] = {
-        (char)SDL_GetKeyFromScancode(SDL_SCANCODE_Q),
-        (char)SDL_GetKeyFromScancode(SDL_SCANCODE_R),
-        (char)SDL_GetKeyFromScancode(SDL_SCANCODE_Y),
+        (char)SDL_GetKeyFromScancode(SDL_SCANCODE_Q, SDL_KMOD_NONE, false),
+        (char)SDL_GetKeyFromScancode(SDL_SCANCODE_R, SDL_KMOD_NONE, false),
+        (char)SDL_GetKeyFromScancode(SDL_SCANCODE_Y, SDL_KMOD_NONE, false),
         '\0',
     };
 
@@ -57,20 +57,13 @@ shortcut_handle_key(Milton* milton, PlatformState* platform, SDL_Event* event, M
 {
     ImGuiIO& io = ImGui::GetIO();
 
-    if (io.WantCaptureKeyboard) {
-        int key = event->key.keysym.scancode;
-        IM_ASSERT(key >= 0 && key < IM_ARRAYSIZE(io.KeysDown));
-        io.KeysDown[key] = (event->type == SDL_KEYDOWN);
-        io.KeyShift = ((SDL_GetModState() & KMOD_SHIFT) != 0);
-        io.KeyCtrl = ((SDL_GetModState() & KMOD_CTRL) != 0);
-        io.KeyAlt = ((SDL_GetModState() & KMOD_ALT) != 0);
-        io.KeySuper = ((SDL_GetModState() & KMOD_GUI) != 0);
-    }
-    else {
+    // ImGui SDL3 backend handles keyboard input internally via ImGui_ImplSDL3_ProcessEvent()
+    // so we don't need to manually update io.KeysDown, io.KeyShift, etc.
+    if (!io.WantCaptureKeyboard) {
         MiltonBindings* bindings = &milton->settings->bindings;
 
         SDL_Keymod m = SDL_GetModState();
-        SDL_Keycode k = event->key.keysym.sym;
+        SDL_Keycode k = event->key.key;
 
         i8 active_key = 0;
         if (k >= 1 && k <= 127) {
@@ -111,10 +104,10 @@ shortcut_handle_key(Milton* milton, PlatformState* platform, SDL_Event* event, M
 
         u32 active_modifiers = 0;
 
-        if (m & KMOD_CTRL) { active_modifiers |= Modifier_CTRL; }
-        if (m & KMOD_SHIFT) { active_modifiers |= Modifier_SHIFT; }
-        if (m & KMOD_GUI) { active_modifiers |= Modifier_WIN; }
-        if (m & KMOD_ALT) { active_modifiers |= Modifier_ALT; }
+        if (m & SDL_KMOD_CTRL) { active_modifiers |= Modifier_CTRL; }
+        if (m & SDL_KMOD_SHIFT) { active_modifiers |= Modifier_SHIFT; }
+        if (m & SDL_KMOD_GUI) { active_modifiers |= Modifier_WIN; }
+        if (m & SDL_KMOD_ALT) { active_modifiers |= Modifier_ALT; }
         if (SDL_GetKeyboardState(NULL)[SDL_SCANCODE_SPACE]) { active_modifiers |= Modifier_SPACE; }
 
         if (is_keyup) {
@@ -231,7 +224,7 @@ sdl_event_loop(Milton* milton, PlatformState* platform)
 
     SDL_Event event;
     while ( SDL_PollEvent(&event) ) {
-        ImGui_ImplSDL2_ProcessEvent(&event);
+        ImGui_ImplSDL3_ProcessEvent(&event);
 
         SDL_Keymod keymod = SDL_GetModState();
 
@@ -248,14 +241,14 @@ sdl_event_loop(Milton* milton, PlatformState* platform)
 #pragma warning (disable : 4061)
 #endif
         switch ( event.type ) {
-            case SDL_QUIT: {
+            case SDL_EVENT_QUIT: {
                 platform_cursor_show();
                 milton_try_quit(milton);
             } break;
             // SDL_SYSWMEVENT removed in SDL 3 - tablet input should be handled via
             // platform-specific polling or other SDL 3 input mechanisms
-            case SDL_MOUSEBUTTONDOWN: {
-                if ( event.button.window_id != platform->window_id ) {
+            case SDL_EVENT_MOUSE_BUTTON_DOWN: {
+                if ( event.button.windowID != platform->window_id ) {
                     break;
                 }
 
@@ -291,8 +284,8 @@ sdl_event_loop(Milton* milton, PlatformState* platform)
                     }
                 }
             } break;
-            case SDL_MOUSEBUTTONUP: {
-                if ( event.button.window_id != platform->window_id ) {
+            case SDL_EVENT_MOUSE_BUTTON_UP: {
+                if ( event.button.windowID != platform->window_id ) {
                     break;
                 }
                 if ( event.button.button == SDL_BUTTON_LEFT
@@ -310,8 +303,8 @@ sdl_event_loop(Milton* milton, PlatformState* platform)
                     milton_input.flags |= MiltonInputFlags_END_STROKE;
                 }
             } break;
-            case SDL_MOUSEMOTION: {
-                if (event.motion.window_id != platform->window_id) {
+            case SDL_EVENT_MOUSE_MOTION: {
+                if (event.motion.windowID != platform->window_id) {
                     break;
                 }
 
@@ -340,8 +333,8 @@ sdl_event_loop(Milton* milton, PlatformState* platform)
                 }
                 break;
             }
-            case SDL_MOUSEWHEEL: {
-                if ( event.wheel.window_id != platform->window_id ) {
+            case SDL_EVENT_MOUSE_WHEEL: {
+                if ( event.wheel.windowID != platform->window_id ) {
                     break;
                 }
                 if ( !ImGui::GetIO().WantCaptureMouse ) {
@@ -356,64 +349,56 @@ sdl_event_loop(Milton* milton, PlatformState* platform)
 
                 break;
             }
-            case SDL_KEYDOWN: {
+            case SDL_EVENT_KEY_DOWN: {
                 shortcut_handle_key(milton, platform, &event, &milton_input, /*is_keyup*/false);
             } break;
-            case SDL_KEYUP: {
-                if ( event.key.window_id != platform->window_id ) {
+            case SDL_EVENT_KEY_UP: {
+                if ( event.key.windowID != platform->window_id ) {
                     break;
                 }
 
-                SDL_Keycode keycode = event.key.keysym.sym;
+                SDL_Keycode keycode = event.key.key;
 
                 if ( keycode == SDLK_SPACE ) {
                     platform->is_space_down = false;
                 }
                 shortcut_handle_key(milton, platform, &event, &milton_input, /*is_keyup*/true);
             } break;
-            case SDL_WINDOWEVENT: {
-                if ( platform->window_id != event.window.window_id ) {
+            // SDL3 window events are now individual event types instead of SDL_WINDOWEVENT with subtypes
+            case SDL_EVENT_WINDOW_MOVED: {
+                if ( platform->window_id != event.window.windowID ) {
                     break;
                 }
-                switch ( event.window.event ) {
-                    // Just handle every event that changes the window size.
-                case SDL_WINDOWEVENT_MOVED:
-                    platform->num_point_results = 0;
-                    platform->num_pressure_results = 0;
-                    platform->is_pointer_down = false;
-                    break;
-                case SDL_WINDOWEVENT_RESIZED:
-                case SDL_WINDOWEVENT_SIZE_CHANGED: {
-
-                    v2i size = { event.window.data1, event.window.data2 };
-                    platform_point_to_pixel_i(platform, &size);
-
-                    platform->width = size.w;
-                    platform->height = size.h;
-
-
-                    milton_input.flags |= MiltonInputFlags_FULL_REFRESH;
-                    glViewport(0, 0, platform->width, platform->height);
+                platform->num_point_results = 0;
+                platform->num_pressure_results = 0;
+                platform->is_pointer_down = false;
+            } break;
+            case SDL_EVENT_WINDOW_RESIZED:
+            case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED: {
+                if ( platform->window_id != event.window.windowID ) {
                     break;
                 }
-                case SDL_WINDOWEVENT_LEAVE:
-                    if ( event.window.windowID != platform->window_id ) {
-                        break;
-                    }
-                    if ( milton->current_mode != MiltonMode::DRAG_BRUSH_SIZE ) {
-                        platform_cursor_show();
-                    }
-                    break;
-                    // --- A couple of events we might want to catch later...
-                case SDL_WINDOWEVENT_ENTER:
-                    {
-                    } break;
-                    break;
-                case SDL_WINDOWEVENT_FOCUS_GAINED:
-                    break;
-                default:
+                v2i size = { event.window.data1, event.window.data2 };
+                platform_point_to_pixel_i(platform, &size);
+
+                platform->width = size.w;
+                platform->height = size.h;
+
+                milton_input.flags |= MiltonInputFlags_FULL_REFRESH;
+                glViewport(0, 0, platform->width, platform->height);
+            } break;
+            case SDL_EVENT_WINDOW_MOUSE_LEAVE: {
+                if ( event.window.windowID != platform->window_id ) {
                     break;
                 }
+                if ( milton->current_mode != MiltonMode::DRAG_BRUSH_SIZE ) {
+                    platform_cursor_show();
+                }
+            } break;
+            // --- A couple of events we might want to catch later...
+            case SDL_EVENT_WINDOW_MOUSE_ENTER: {
+            } break;
+            case SDL_EVENT_WINDOW_FOCUS_GAINED: {
             } break;
             default: {
                 break;
@@ -491,11 +476,10 @@ milton_main(bool is_fullscreen, char* file_to_open)
             else {
                 // TODO: Does this work on retina mac?
                 milton_log("Running fullscreen\n");
-                SDL_DisplayMode dm;
-                SDL_GetDesktopDisplayMode(0, &dm);
+                const SDL_DisplayMode* dm = SDL_GetCurrentDisplayMode(SDL_GetPrimaryDisplay());
 
-                window_width = dm.w;
-                window_height = dm.h;
+                window_width = dm->w;
+                window_height = dm->h;
             }
         }
     }
@@ -531,7 +515,7 @@ milton_main(bool is_fullscreen, char* file_to_open)
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
     #endif
 
-    Uint32 sdl_window_flags = SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI;
+    Uint32 sdl_window_flags = SDL_WINDOW_OPENGL | SDL_WINDOW_HIGH_PIXEL_DENSITY;
 
     if (is_fullscreen) {
         sdl_window_flags |= SDL_WINDOW_FULLSCREEN;
@@ -540,10 +524,7 @@ milton_main(bool is_fullscreen, char* file_to_open)
         sdl_window_flags |= SDL_WINDOW_RESIZABLE;
     }
 
-    window = SDL_CreateWindow("Milton",
-                              SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-                              window_width, window_height,
-                              sdl_window_flags);
+    window = SDL_CreateWindow("Milton", window_width, window_height, sdl_window_flags);
 
     if ( !window ) {
         milton_log("SDL Error: %s\n", SDL_GetError());
@@ -581,7 +562,7 @@ milton_main(bool is_fullscreen, char* file_to_open)
     const char* gl_version = "#version 120 \n";
 #endif
 
-    ImGui_ImplSDL2_InitForOpenGL(window, &gl_context);
+    ImGui_ImplSDL3_InitForOpenGL(window, &gl_context);
     ImGui_ImplOpenGL3_Init(gl_version);
 
     SDL_GL_SetSwapInterval(1);
@@ -688,10 +669,10 @@ milton_main(bool is_fullscreen, char* file_to_open)
     }
     // Initialize system cursors
     {
-        platform.cursor_default   = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
-        platform.cursor_hand      = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HAND);
+        platform.cursor_default   = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_DEFAULT);
+        platform.cursor_hand      = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_POINTER);
         platform.cursor_crosshair = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_CROSSHAIR);
-        platform.cursor_sizeall   = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEALL);
+        platform.cursor_sizeall   = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_MOVE);
 
         cursor_set_and_show(platform.cursor_default);
     }
@@ -736,8 +717,8 @@ milton_main(bool is_fullscreen, char* file_to_open)
         }
 
         {
-            int x = 0;
-            int y = 0;
+            float x = 0.0f;
+            float y = 0.0f;
             SDL_GetMouseState(&x, &y);
 
             // Convert x,y to pixels
@@ -819,7 +800,7 @@ milton_main(bool is_fullscreen, char* file_to_open)
         i32 input_flags = (i32)milton_input.flags;
 
         ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplSDL2_NewFrame(window);
+        ImGui_ImplSDL3_NewFrame();
         ImGui::NewFrame();
 
         // Avoid the case where we stop changing the brush size when we hover over GUI elements.

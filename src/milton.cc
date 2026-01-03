@@ -757,7 +757,7 @@ milton_init(Milton* milton, i32 width, i32 height, f32 ui_scale, PATH_CHAR* file
 
 #if MILTON_SAVE_ASYNC
     milton->save_mutex = SDL_CreateMutex();
-    milton->save_cond = SDL_CreateCond();
+    milton->save_cond = SDL_CreateCondition();
     milton->save_thread = SDL_CreateThread(milton_save_thread, "Save thread", (void*)milton);
 #endif
 }
@@ -948,7 +948,7 @@ milton_kill_save_thread(Milton* milton)
 
     // Do a save tick.
     SDL_LockMutex(milton->save_mutex);
-    SDL_CondSignal(milton->save_cond);
+    SDL_SignalCondition(milton->save_cond);
     SDL_UnlockMutex(milton->save_mutex);
 
     SDL_WaitThread(milton->save_thread, NULL);
@@ -968,7 +968,7 @@ milton_save_thread(void* state_)
         bool do_save = false;
         SDL_LockMutex(milton->save_mutex);
 
-        SDL_CondWait(milton->save_cond, milton->save_mutex); // Wait for a frame tick.
+        SDL_WaitCondition(milton->save_cond, milton->save_mutex); // Wait for a frame tick.
 
         if ( milton->save_flag == SaveEnum_KILL ) {
             running = false;
@@ -1840,7 +1840,7 @@ milton_update_and_render(Milton* milton, MiltonInput const* input)
 
 #if MILTON_SAVE_ASYNC
     SDL_LockMutex(milton->save_mutex);
-    SDL_CondSignal(milton->save_cond);
+    SDL_SignalCondition(milton->save_cond);
     SDL_UnlockMutex(milton->save_mutex);
 #endif
 

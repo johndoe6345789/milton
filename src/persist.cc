@@ -4,13 +4,13 @@
 #include "persist.h"
 
 #include <stb_image_write.h>
+#include <turbojpeg.h>
 
 #include "common.h"
 #include "gui.h"
 #include "memory.h"
 #include "milton.h"
 #include "platform.h"
-#include "tiny_jpeg.h"
 
 
 #define MILTON_MAGIC_NUMBER 0X11DECAF3
@@ -835,7 +835,20 @@ milton_save_buffer_to_file(PATH_CHAR* fname, u8* buffer, i32 w, i32 h)
                 stbi_write_png_to_func(write_func, &fd, w, h, 4, buffer, 0);
             }
             else if ( !PATH_STRCMP(ext, TO_PATH_STR("jpg")) || !PATH_STRCMP(ext, TO_PATH_STR("jpeg")) ) {
-                tje_encode_with_func(write_func, &fd, 3, w, h, 4, buffer);
+                // Use libjpeg-turbo to encode JPEG
+                tjhandle tj = tjInitCompress();
+                if (tj) {
+                    unsigned char* jpeg_buf = NULL;
+                    unsigned long jpeg_size = 0;
+                    // Compress RGBA to JPEG (quality 90)
+                    int result = tjCompress2(tj, buffer, w, 0, h, TJPF_RGBA,
+                                            &jpeg_buf, &jpeg_size, TJSAMP_444, 90, 0);
+                    if (result == 0 && jpeg_buf) {
+                        write_func(&fd, jpeg_buf, (int)jpeg_size);
+                        tjFree(jpeg_buf);
+                    }
+                    tjDestroy(tj);
+                }
             }
             else {
                 platform_dialog("File extension not handled by Milton\n", "Info");

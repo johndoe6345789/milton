@@ -57,6 +57,7 @@ conanbuild.sh
 conanrun.sh
 *.sh
 CMakePresets.json
+CMakeUserPresets.json
 cmake_paths.cmake
 
 # CMake
@@ -77,4 +78,7 @@ src/shaders.gen.h
 
 # Deploy script
 OUTPUT
+
+# Build artifacts
 shadergen
+Milton

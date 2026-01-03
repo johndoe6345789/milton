@@ -2,6 +2,7 @@
 sdl/3.2.20
 imgui/1.92.5
 stb/cci.20240531
+libjpeg-turbo/3.0.4
 
 [generators]
 CMakeDeps
