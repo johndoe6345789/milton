@@ -7,3 +7,6 @@ libjpeg-turbo/3.0.4
 [generators]
 CMakeDeps
 CMakeToolchain
+
+[layout]
+cmake_layout

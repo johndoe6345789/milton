@@ -40,11 +40,6 @@ sudo apt-get install perl perl-modules libfile-compare-perl libipc-cmd-perl \
                      libtime-piece-perl libthread-queue-perl
 ```
 
-#### Linux (Ubuntu/Debian)
-```bash
-sudo apt-get install perl perl-modules
-```
-
 #### macOS
 ```bash
 # Perl comes with macOS, but install via Homebrew for latest
@@ -189,7 +184,7 @@ New wrapper functions handle platform window handles via SDL 3's property API:
 
 ### "Package 'sdl/3.2.20' not resolved"
 - Ensure Conan remotes are configured: `conan remote list`
-- Try: `conan remove "*" --confirm` and re-run `conan install .`
+- Try: `conan remove "*" --confirm` and re-run `conan install ..` (from the build directory)
 
 ### CMake configuration fails
 - Verify CMake is in PATH: `cmake --version`
@@ -197,7 +192,7 @@ New wrapper functions handle platform window handles via SDL 3's property API:
 - Ensure all dependencies are installed
 
 ### Build fails with missing headers
-- Run `conan install . --build=missing` to build SDL from source
+- Run `conan install .. --build=missing` to build SDL from source (from the build directory)
 - Check that OpenGL development files are installed
 
 ### Tablet input not working
@@ -206,6 +201,14 @@ New wrapper functions handle platform window handles via SDL 3's property API:
 - On Windows: Install latest graphics drivers
 
 ## Development
+
+### Cleaning Build Artifacts
+To clean all generated files and start fresh:
+```bash
+./clean.sh
+```
+
+This removes the build directory, Conan-generated files, and CMake config files from the root.
 
 ### Generating Shader Headers
 Shaders are pre-compiled. To regenerate:
