@@ -374,7 +374,7 @@ static bool create_stroke_pipeline(RenderBackend* renderer)
     pipeline_info.pColorBlendState = &color_blend;
     pipeline_info.pDynamicState = &dynamic_state;
     pipeline_info.layout = renderer->stroke_pipeline_layout;
-    pipeline_info.renderPass = vk::g_vk_context.render_pass;
+    pipeline_info.renderPass = renderer->canvas_render_pass;
     pipeline_info.subpass = 0;
 
     renderer->stroke_pipeline = vk::create_graphics_pipeline(&pipeline_info);
@@ -526,7 +526,7 @@ static bool create_simple_pipeline(RenderBackend* renderer)
     pipeline_info.pColorBlendState = &color_blend;
     pipeline_info.pDynamicState = &dynamic_state;
     pipeline_info.layout = renderer->quad_pipeline_layout;
-    pipeline_info.renderPass = vk::g_vk_context.render_pass;
+    pipeline_info.renderPass = renderer->canvas_render_pass;
     pipeline_info.subpass = 0;
 
     renderer->quad_pipeline = vk::create_graphics_pipeline(&pipeline_info);
@@ -1181,6 +1181,11 @@ b32 gpu_init(RenderBackend* renderer, CanvasView* view, ColorPicker* picker)
         return false;
     }
 
+    if (!create_canvas_target(renderer)) {
+        milton_log("Failed to create canvas target\n");
+        return false;
+    }
+
     if (!create_fullscreen_quad(renderer)) {
         milton_log("Failed to create fullscreen quad buffer\n");
         return false;
@@ -1193,11 +1198,6 @@ b32 gpu_init(RenderBackend* renderer, CanvasView* view, ColorPicker* picker)
 
     if (!create_stroke_pipeline(renderer)) {
         milton_log("Failed to create stroke pipeline\n");
-        return false;
-    }
-
-    if (!create_canvas_target(renderer)) {
-        milton_log("Failed to create canvas target\n");
         return false;
     }
 
@@ -1330,6 +1330,22 @@ void gpu_resize(RenderBackend* renderer, CanvasView* view)
     }
     if (!create_canvas_target(renderer)) {
         milton_log("Failed to recreate canvas target\n");
+        return;
+    }
+    if (renderer->quad_pipeline != VK_NULL_HANDLE) {
+        vkDestroyPipeline(vk::g_vk_context.device, renderer->quad_pipeline, nullptr);
+        renderer->quad_pipeline = VK_NULL_HANDLE;
+    }
+    if (renderer->stroke_pipeline != VK_NULL_HANDLE) {
+        vkDestroyPipeline(vk::g_vk_context.device, renderer->stroke_pipeline, nullptr);
+        renderer->stroke_pipeline = VK_NULL_HANDLE;
+    }
+    if (!create_simple_pipeline(renderer)) {
+        milton_log("Failed to recreate simple pipeline\n");
+        return;
+    }
+    if (!create_stroke_pipeline(renderer)) {
+        milton_log("Failed to recreate stroke pipeline\n");
         return;
     }
     if (!create_blend_pipeline(renderer)) {
