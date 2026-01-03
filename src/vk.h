@@ -38,9 +38,11 @@ struct Context {
     VkPipelineCache pipeline_cache;
     
     // Synchronization
-    VkSemaphore image_available_semaphore;
-    VkSemaphore render_finished_semaphore;
-    VkFence in_flight_fence;
+    static const uint32_t kMaxFramesInFlight = 2;
+    VkSemaphore image_available_semaphores[kMaxFramesInFlight];
+    VkSemaphore render_finished_semaphores[kMaxFramesInFlight];
+    VkFence in_flight_fences[kMaxFramesInFlight];
+    VkFence images_in_flight[8];
     
     uint32_t current_frame;
     

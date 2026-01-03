@@ -419,7 +419,8 @@ static void upload_buffer(vk::Buffer* buffer, const void* data, size_t size)
 
 static void wait_for_gpu_idle()
 {
-    vkWaitForFences(vk::g_vk_context.device, 1, &vk::g_vk_context.in_flight_fence, VK_TRUE, UINT64_MAX);
+    VkFence in_flight_fence = vk::g_vk_context.in_flight_fences[vk::g_vk_context.current_frame];
+    vkWaitForFences(vk::g_vk_context.device, 1, &in_flight_fence, VK_TRUE, UINT64_MAX);
 }
 
 static bool create_or_resize_buffer(vk::Buffer* buffer, VkDeviceSize size, VkBufferUsageFlags usage)
@@ -1788,12 +1789,15 @@ void gpu_render(RenderBackend* renderer, i32 view_x, i32 view_y, i32 view_width,
     }
     
     // Wait for previous frame
-    vkWaitForFences(vk::g_vk_context.device, 1, &vk::g_vk_context.in_flight_fence, VK_TRUE, UINT64_MAX);
+    VkFence in_flight_fence = vk::g_vk_context.in_flight_fences[vk::g_vk_context.current_frame];
+    vkWaitForFences(vk::g_vk_context.device, 1, &in_flight_fence, VK_TRUE, UINT64_MAX);
     
     // Acquire next image
     uint32_t image_index;
+    VkSemaphore image_available = vk::g_vk_context.image_available_semaphores[vk::g_vk_context.current_frame];
+    VkSemaphore render_finished = vk::g_vk_context.render_finished_semaphores[vk::g_vk_context.current_frame];
     VkResult result = vkAcquireNextImageKHR(vk::g_vk_context.device, vk::g_vk_context.swapchain,
-                                           UINT64_MAX, vk::g_vk_context.image_available_semaphore,
+                                           UINT64_MAX, image_available,
                                            VK_NULL_HANDLE, &image_index);
     
     if (result == VK_ERROR_OUT_OF_DATE_KHR) {
@@ -1802,7 +1806,13 @@ void gpu_render(RenderBackend* renderer, i32 view_x, i32 view_y, i32 view_width,
         return;
     }
     
-    vkResetFences(vk::g_vk_context.device, 1, &vk::g_vk_context.in_flight_fence);
+    if (vk::g_vk_context.images_in_flight[image_index] != VK_NULL_HANDLE) {
+        vkWaitForFences(vk::g_vk_context.device, 1,
+                        &vk::g_vk_context.images_in_flight[image_index], VK_TRUE, UINT64_MAX);
+    }
+    vk::g_vk_context.images_in_flight[image_index] = in_flight_fence;
+
+    vkResetFences(vk::g_vk_context.device, 1, &in_flight_fence);
     
     // Record command buffer
     VkCommandBuffer cmd = renderer->command_buffers[image_index];
@@ -2001,7 +2011,7 @@ void gpu_render(RenderBackend* renderer, i32 view_x, i32 view_y, i32 view_width,
     VkSubmitInfo submit_info = {};
     submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     
-    VkSemaphore wait_semaphores[] = {vk::g_vk_context.image_available_semaphore};
+    VkSemaphore wait_semaphores[] = {image_available};
     VkPipelineStageFlags wait_stages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
     submit_info.waitSemaphoreCount = 1;
     submit_info.pWaitSemaphores = wait_semaphores;
@@ -2009,12 +2019,12 @@ void gpu_render(RenderBackend* renderer, i32 view_x, i32 view_y, i32 view_width,
     submit_info.commandBufferCount = 1;
     submit_info.pCommandBuffers = &cmd;
     
-    VkSemaphore signal_semaphores[] = {vk::g_vk_context.render_finished_semaphore};
+    VkSemaphore signal_semaphores[] = {render_finished};
     submit_info.signalSemaphoreCount = 1;
     submit_info.pSignalSemaphores = signal_semaphores;
     
-    if (vkQueueSubmit(vk::g_vk_context.graphics_queue, 1, &submit_info, 
-                     vk::g_vk_context.in_flight_fence) != VK_SUCCESS) {
+    if (vkQueueSubmit(vk::g_vk_context.graphics_queue, 1, &submit_info,
+                     in_flight_fence) != VK_SUCCESS) {
         milton_log("Failed to submit draw command buffer\n");
         return;
     }
@@ -2029,6 +2039,9 @@ void gpu_render(RenderBackend* renderer, i32 view_x, i32 view_y, i32 view_width,
     present_info.pImageIndices = &image_index;
     
     vkQueuePresentKHR(vk::g_vk_context.present_queue, &present_info);
+
+    vk::g_vk_context.current_frame =
+        (vk::g_vk_context.current_frame + 1) % vk::Context::kMaxFramesInFlight;
 }
 
 void gpu_render_to_buffer(Milton* milton, u8* buffer, i32 scale, i32 x, i32 y, i32 w, i32 h, f32 background_alpha)

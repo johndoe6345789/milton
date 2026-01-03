@@ -511,14 +511,23 @@ static bool create_sync_objects() {
     VkFenceCreateInfo fence_info = {};
     fence_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
     fence_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-    
-    if (vkCreateSemaphore(g_vk_context.device, &semaphore_info, nullptr, &g_vk_context.image_available_semaphore) != VK_SUCCESS ||
-        vkCreateSemaphore(g_vk_context.device, &semaphore_info, nullptr, &g_vk_context.render_finished_semaphore) != VK_SUCCESS ||
-        vkCreateFence(g_vk_context.device, &fence_info, nullptr, &g_vk_context.in_flight_fence) != VK_SUCCESS) {
-        vk::log("Failed to create synchronization objects\n");
-        return false;
+
+    for (uint32_t i = 0; i < Context::kMaxFramesInFlight; ++i) {
+        if (vkCreateSemaphore(g_vk_context.device, &semaphore_info, nullptr,
+                              &g_vk_context.image_available_semaphores[i]) != VK_SUCCESS ||
+            vkCreateSemaphore(g_vk_context.device, &semaphore_info, nullptr,
+                              &g_vk_context.render_finished_semaphores[i]) != VK_SUCCESS ||
+            vkCreateFence(g_vk_context.device, &fence_info, nullptr,
+                          &g_vk_context.in_flight_fences[i]) != VK_SUCCESS) {
+            vk::log("Failed to create synchronization objects\n");
+            return false;
+        }
     }
-    
+
+    for (uint32_t i = 0; i < g_vk_context.swapchain_image_count; ++i) {
+        g_vk_context.images_in_flight[i] = VK_NULL_HANDLE;
+    }
+
     return true;
 }
 
@@ -548,9 +557,11 @@ void cleanup() {
     if (g_vk_context.device != VK_NULL_HANDLE) {
         vkDeviceWaitIdle(g_vk_context.device);
         
-        vkDestroySemaphore(g_vk_context.device, g_vk_context.image_available_semaphore, nullptr);
-        vkDestroySemaphore(g_vk_context.device, g_vk_context.render_finished_semaphore, nullptr);
-        vkDestroyFence(g_vk_context.device, g_vk_context.in_flight_fence, nullptr);
+        for (uint32_t i = 0; i < Context::kMaxFramesInFlight; ++i) {
+            vkDestroySemaphore(g_vk_context.device, g_vk_context.image_available_semaphores[i], nullptr);
+            vkDestroySemaphore(g_vk_context.device, g_vk_context.render_finished_semaphores[i], nullptr);
+            vkDestroyFence(g_vk_context.device, g_vk_context.in_flight_fences[i], nullptr);
+        }
 
         if (g_vk_context.pipeline_cache != VK_NULL_HANDLE) {
             vkDestroyPipelineCache(g_vk_context.device, g_vk_context.pipeline_cache, nullptr);
