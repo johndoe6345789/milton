@@ -1,5 +1,5 @@
 [requires]
-sdl
+sdl/3.2.20
 imgui
 
 [generators]
