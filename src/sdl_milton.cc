@@ -793,8 +793,20 @@ milton_main(bool is_fullscreen, char* file_to_open)
             ImGui::GetIO().WantCaptureMouse = false;
         }
 
-        // Clear our pointer input because ImGui wants to capture the mouse (over any ImGui window/widget)
+        // Clear our pointer input only if mouse is ACTUALLY over ImGui UI
+        b32 imgui_has_mouse = false;
         if ( ImGui::GetIO().WantCaptureMouse ) {
+            // Check if mouse is over menu bar at the top
+            float menu_bar_height = ImGui::GetFrameHeight();
+            b32 over_menu_bar = (milton->gui->menu_visible && platform.pointer.y < menu_bar_height);
+            
+            // Check if mouse is over any ImGui window (layers, brushes, etc)
+            b32 over_imgui_window = ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+            
+            imgui_has_mouse = over_menu_bar || over_imgui_window;
+        }
+        
+        if ( imgui_has_mouse ) {
             platform.num_point_results = 0;
             platform.is_pointer_down = false;
             input_flags |= MiltonInputFlags_IMGUI_GRABBED_INPUT;
