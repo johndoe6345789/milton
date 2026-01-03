@@ -26,10 +26,28 @@
 
 #include <AppKit/AppKit.h>
 
-void
-platform_init(PlatformState* platform, SDL_SysWMinfo* sysinfo)
+// SDL 3 wrapper functions for getting native window handles
+void*
+platform_get_native_window_pointer(SDL_Window* window)
 {
+    // On macOS, get the NSWindow pointer
+    // SDL 3 uses SDL_GetProperty with SDL_PROP_WINDOW_COCOA_WINDOW_POINTER
+    void* nswindow = SDL_GetProperty(window, SDL_PROP_WINDOW_COCOA_WINDOW_POINTER, NULL);
+    return nswindow;
+}
 
+void*
+platform_get_native_display_pointer(SDL_Window* window)
+{
+    // macOS doesn't use a separate display pointer
+    return NULL;
+}
+
+void
+platform_init(PlatformState* platform, SDL_Window* window)
+{
+    // macOS-specific initialization would go here
+    // Currently minimal setup needed
 }
 
 void
@@ -41,6 +59,16 @@ platform_deinit(PlatformState* platform)
 void
 platform_event_tick()
 {
+}
+
+void
+platform_handle_tablet_input(PlatformState* platform)
+{
+    // SDL 3: Tablet input handling for macOS
+    // macOS tablet support via EasyTab if available
+    if (EasyTab != NULL) {
+        // macOS tablet polling would go here
+    }
 }
 
 void

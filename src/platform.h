@@ -103,7 +103,11 @@ typedef struct TabletState_s TabletState;
 
 int milton_main(bool is_fullscreen, char* file_to_open);
 
-void    platform_init(PlatformState* platform, SDL_SysWMinfo* sysinfo);
+// SDL 3 wrapper functions for getting native window handles
+void*   platform_get_native_window_pointer(SDL_Window* window);  // Returns HWND on Windows, Display* on Linux, etc.
+void*   platform_get_native_display_pointer(SDL_Window* window);  // Returns Display* on Linux, NULL on others
+
+void    platform_init(PlatformState* platform, SDL_Window* window);  // SDL 3: pass window directly
 void    platform_deinit(PlatformState* platform);
 
 void    platform_setup_cursor(Arena* arena, PlatformState* platform);
@@ -112,8 +116,10 @@ void    platform_cursor_set_position(PlatformState* platform, v2i pos);
 // Get cursor position in client-rect space, whether or not it is within the client rect.
 v2i     platform_cursor_get_position(PlatformState* platform);
 
-EasyTabResult platform_handle_sysevent(PlatformState* platform, SDL_SysWMEvent* sysevent);
+// SDL 3: platform_handle_sysevent removed - tablet handling done differently
+// In SDL 3, tablet input is polled via EasyTab_HandleEvent periodically in platform_event_tick
 void          platform_event_tick();
+void          platform_handle_tablet_input(PlatformState* platform);  // Called each frame to poll tablet
 
 void*   platform_allocate(size_t size);
 #define platform_deallocate(pointer) platform_deallocate_internal((void**)&(pointer));

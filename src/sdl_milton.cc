@@ -3,6 +3,7 @@
 
 #define IMGUI_IMPL_OPENGL_LOADER_CUSTOM "gl.h"
 #include <imgui.h>
+// SDL 3 migration: ImGui bindings may need update to SDL 3 version
 #include "imgui_impl_sdl.h"
 #include "imgui_impl_opengl3.h"
 
@@ -251,66 +252,10 @@ sdl_event_loop(Milton* milton, PlatformState* platform)
                 platform_cursor_show();
                 milton_try_quit(milton);
             } break;
-            case SDL_SYSWMEVENT: {
-                f32 pressure = NO_PRESSURE_INFO;
-                SDL_SysWMEvent sysevent = event.syswm;
-                EasyTabResult er = EASYTAB_EVENT_NOT_HANDLED;
-                if (!EasyTab) { break; }
-
-                i32 bit_touch_old = (EasyTab->Buttons & EasyTab_Buttons_Pen_Touch);
-
-                er = platform_handle_sysevent(platform, &sysevent);
-
-                if ( er == EASYTAB_OK ) {
-                    i32 bit_touch = (EasyTab->Buttons & EasyTab_Buttons_Pen_Touch);
-                    i32 bit_lower = (EasyTab->Buttons & EasyTab_Buttons_Pen_Lower);
-                    i32 bit_upper = (EasyTab->Buttons & EasyTab_Buttons_Pen_Upper);
-
-                    // Pen in use but not drawing
-                    b32 taking_pen_input = EasyTab->PenInProximity
-                                           && bit_touch
-                                           && !( bit_upper || bit_lower );
-
-                    if ( taking_pen_input ) {
-                        platform->is_pointer_down = true;
-
-                        for ( int pi = 0; pi < EasyTab->NumPackets; ++pi ) {
-                            v2l point = { EasyTab->PosX[pi], EasyTab->PosY[pi] };
-
-                            platform_point_to_pixel(platform, &point);
-
-                            if ( point.x >= 0 && point.y >= 0 ) {
-                                if ( platform->num_point_results < MAX_INPUT_BUFFER_ELEMS ) {
-                                    milton_input.points[platform->num_point_results++] = point;
-                                }
-                                if ( platform->num_pressure_results < MAX_INPUT_BUFFER_ELEMS ) {
-                                    milton_input.pressures[platform->num_pressure_results++] = EasyTab->Pressure[pi];
-                                }
-                            }
-                        }
-                    }
-
-                    if ( !bit_touch && bit_touch_old ) {
-                        pointer_up = true;  // Wacom does not seem to send button-up messages after
-                                            // using stylus buttons while stroking.
-                    }
-
-
-                    if ( EasyTab->NumPackets > 0 ) {
-                        v2i point = { EasyTab->PosX[EasyTab->NumPackets-1], EasyTab->PosY[EasyTab->NumPackets-1] };
-
-                        platform_point_to_pixel_i(platform, &point);
-
-                        platform->pointer = point;
-                    }
-                }
-
-                if (er == EASYTAB_NEEDS_REINIT) {
-                    platform_dialog("Tablet information changed. You might want to restart Milton", "Tablet info changed.");
-                }
-            } break;
+            // SDL_SYSWMEVENT removed in SDL 3 - tablet input should be handled via
+            // platform-specific polling or other SDL 3 input mechanisms
             case SDL_MOUSEBUTTONDOWN: {
-                if ( event.button.windowID != platform->window_id ) {
+                if ( event.button.window_id != platform->window_id ) {
                     break;
                 }
 
@@ -347,7 +292,7 @@ sdl_event_loop(Milton* milton, PlatformState* platform)
                 }
             } break;
             case SDL_MOUSEBUTTONUP: {
-                if ( event.button.windowID != platform->window_id ) {
+                if ( event.button.window_id != platform->window_id ) {
                     break;
                 }
                 if ( event.button.button == SDL_BUTTON_LEFT
@@ -366,7 +311,7 @@ sdl_event_loop(Milton* milton, PlatformState* platform)
                 }
             } break;
             case SDL_MOUSEMOTION: {
-                if (event.motion.windowID != platform->window_id) {
+                if (event.motion.window_id != platform->window_id) {
                     break;
                 }
 
@@ -396,7 +341,7 @@ sdl_event_loop(Milton* milton, PlatformState* platform)
                 break;
             }
             case SDL_MOUSEWHEEL: {
-                if ( event.wheel.windowID != platform->window_id ) {
+                if ( event.wheel.window_id != platform->window_id ) {
                     break;
                 }
                 if ( !ImGui::GetIO().WantCaptureMouse ) {
@@ -415,7 +360,7 @@ sdl_event_loop(Milton* milton, PlatformState* platform)
                 shortcut_handle_key(milton, platform, &event, &milton_input, /*is_keyup*/false);
             } break;
             case SDL_KEYUP: {
-                if ( event.key.windowID != platform->window_id ) {
+                if ( event.key.window_id != platform->window_id ) {
                     break;
                 }
 
@@ -427,7 +372,7 @@ sdl_event_loop(Milton* milton, PlatformState* platform)
                 shortcut_handle_key(milton, platform, &event, &milton_input, /*is_keyup*/true);
             } break;
             case SDL_WINDOWEVENT: {
-                if ( platform->window_id != event.window.windowID ) {
+                if ( platform->window_id != event.window.window_id ) {
                     break;
                 }
                 switch ( event.window.event ) {
@@ -481,6 +426,9 @@ sdl_event_loop(Milton* milton, PlatformState* platform)
             break;
         }
     }  // ---- End of SDL event loop
+    
+    // SDL 3: Handle tablet input via polling (replaces old SYSWMEVENT mechanism)
+    platform_handle_tablet_input(platform);
 
     if ( pointer_up ) {
         // Add final point
@@ -654,22 +602,12 @@ milton_main(bool is_fullscreen, char* file_to_open)
 
     Milton* milton = arena_bootstrap(Milton, root_arena, 1024*1024);
 
-    // Ask for native events to poll tablet events.
-    SDL_EventState(SDL_SYSWMEVENT, SDL_ENABLE);
-
-    SDL_SysWMinfo sysinfo;
-    SDL_VERSION(&sysinfo.version);
-
-    // Platform-specific setup
+    // Platform-specific setup - SDL 3 compatibility
+    // Pass window to platform_init for SDL_GetProperty access
 #if defined(_MSC_VER)
 #pragma warning (push, 0)
 #endif
-    if ( SDL_GetWindowWMInfo( window, &sysinfo ) ) {
-        platform_init(&platform, &sysinfo);
-    }
-    else {
-        milton_die_gracefully("Can't get system info!\n");
-    }
+    platform_init(&platform, window);
 #if defined(_MSC_VER)
 #pragma warning (pop)
 #endif

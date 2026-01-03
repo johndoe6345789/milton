@@ -1,5 +1,7 @@
 [requires]
-sdl/2.30.10
+sdl/3.2.20
+opengl/system
+threading/system
 
 [generators]
 CMakeDeps
