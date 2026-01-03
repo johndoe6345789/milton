@@ -70,6 +70,7 @@ find_package(stb CONFIG REQUIRED)
 find_package(JPEG REQUIRED)
 find_package(Threads REQUIRED)
 find_package(PkgConfig)
+find_package(X11)
 
 # Get imgui package root directory - use conan variables directly
 # Conan provides imgui_INCLUDE_DIRS_RELEASE variable
@@ -124,6 +125,11 @@ target_link_libraries(Milton
 # Link GTK3 on Linux
 if(UNIX AND NOT APPLE AND GTK3_FOUND)
   target_link_libraries(Milton PRIVATE ${GTK3_LIBRARIES})
+endif()
+
+# Optional X11/XInput for tablet support (no hard dependency; works on Wayland too).
+if(UNIX AND X11_FOUND AND X11_Xi_FOUND)
+  target_link_libraries(Milton PRIVATE ${X11_Xi_LIB})
 endif()
 
 if(UNIX)
