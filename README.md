@@ -91,26 +91,25 @@ This will:
 ### Step 2: Configure with CMake
 
 ```bash
-cd build
 # Using Conan's preset (requires CMake 3.23+)
-cmake .. --preset conan-release
+cmake --preset conan-release
 
 # Or manually with toolchain
-cmake .. -G "Unix Makefiles" -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release
+cmake -B build -G "Unix Makefiles" -DCMAKE_TOOLCHAIN_FILE=build/Release/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release
 ```
 
 ### Step 3: Build
 
 ```bash
-cmake --build . -- -j$(nproc)
+cmake --build build -- -j$(nproc)
 # Or use make directly
-make -j$(nproc)
+cd build && make -j$(nproc)
 ```
 
 ### Step 4: Run
 
 ```bash
-./Milton
+./build/Milton
 ```
 
 ## Project Structure
