@@ -417,10 +417,18 @@ static void upload_buffer(vk::Buffer* buffer, const void* data, size_t size)
     vkUnmapMemory(vk::g_vk_context.device, buffer->memory);
 }
 
+static void wait_for_gpu_idle()
+{
+    vkWaitForFences(vk::g_vk_context.device, 1, &vk::g_vk_context.in_flight_fence, VK_TRUE, UINT64_MAX);
+}
+
 static bool create_or_resize_buffer(vk::Buffer* buffer, VkDeviceSize size, VkBufferUsageFlags usage)
 {
     if (buffer->buffer != VK_NULL_HANDLE && buffer->size >= size) {
         return true;
+    }
+    if (buffer->buffer != VK_NULL_HANDLE) {
+        wait_for_gpu_idle();
     }
     vk::destroy_buffer(buffer);
     return vk::create_buffer(size, usage,
@@ -1243,10 +1251,10 @@ void gpu_update_brush_outline(RenderBackend* renderer, i32 cx, i32 cy, i32 radiu
     auto h = (float)renderer->height;
 
     QuadVertex data[] = {
-        {2 * ((cx - radius_plus_girth) / w) - 1, -2 * ((cy - radius_plus_girth) / h) + 1},
-        {2 * ((cx - radius_plus_girth) / w) - 1, -2 * ((cy + radius_plus_girth) / h) + 1},
-        {2 * ((cx + radius_plus_girth) / w) - 1, -2 * ((cy + radius_plus_girth) / h) + 1},
-        {2 * ((cx + radius_plus_girth) / w) - 1, -2 * ((cy - radius_plus_girth) / h) + 1},
+        {2 * ((cx - radius_plus_girth) / w) - 1, 2 * ((cy - radius_plus_girth) / h) - 1},
+        {2 * ((cx - radius_plus_girth) / w) - 1, 2 * ((cy + radius_plus_girth) / h) - 1},
+        {2 * ((cx + radius_plus_girth) / w) - 1, 2 * ((cy + radius_plus_girth) / h) - 1},
+        {2 * ((cx + radius_plus_girth) / w) - 1, 2 * ((cy - radius_plus_girth) / h) - 1},
     };
 
     QuadVertex sizes[] = {
@@ -1388,8 +1396,8 @@ void gpu_update_picker(RenderBackend* renderer, ColorPicker* picker)
     float bottom = (float)rect.bottom / screen_size.h;
     float left = (float)rect.left / screen_size.w;
     float right = (float)rect.right / screen_size.w;
-    top = (top * 2.0f - 1.0f) * -1;
-    bottom = (bottom * 2.0f - 1.0f) * -1;
+    top = top * 2.0f - 1.0f;
+    bottom = bottom * 2.0f - 1.0f;
     left = left * 2.0f - 1.0f;
     right = right * 2.0f - 1.0f;
 
@@ -1493,6 +1501,7 @@ void gpu_reset_stroke(RenderBackend* r, RenderHandle handle)
         return;
     }
 
+    wait_for_gpu_idle();
     vk::destroy_buffer(&re->vbo_stroke);
     vk::destroy_buffer(&re->vbo_pointa);
     vk::destroy_buffer(&re->vbo_pointb);
@@ -1625,6 +1634,7 @@ void gpu_cook_stroke(Arena* arena, RenderBackend* renderer, Stroke* stroke, Cook
         }
     }
 
+    wait_for_gpu_idle();
     vk::destroy_buffer(&render_element->vbo_stroke);
     vk::destroy_buffer(&render_element->vbo_pointa);
     vk::destroy_buffer(&render_element->vbo_pointb);

@@ -1610,8 +1610,8 @@ milton_update_and_render(Milton* milton, MiltonInput const* input)
 
             float left = 2*((float)    x / (milton->view->screen_size.w))-1;
             float right = 2*((float)(x+w) / (milton->view->screen_size.w))-1;
-            float top = -(2*((float)y     / (milton->view->screen_size.h))-1);
-            float bottom = -(2*((float)(y+h) / (milton->view->screen_size.h))-1);
+            float top = 2*((float)y     / (milton->view->screen_size.h))-1;
+            float bottom = 2*((float)(y+h) / (milton->view->screen_size.h))-1;
 
             imm_rect(milton->renderer, left, right, top, bottom, 2.0);
         }
@@ -1899,7 +1899,7 @@ milton_update_and_render(Milton* milton, MiltonInput const* input)
         milton->render_settings.do_full_redraw = true;
     }
 
-    // Note: We flip the rectangles. GL is bottom-left by default.
+    // Vulkan uses a top-left screen origin with a positive viewport height.
     if ( milton->render_settings.do_full_redraw ) {
         view_width = milton->view->screen_size.w;
         view_height = milton->view->screen_size.h;

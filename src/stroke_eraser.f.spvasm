@@ -143,7 +143,7 @@
          %59 = OpLoad %float %58
          %60 = OpAccessChain %_ptr_Input_float %gl_FragCoord %uint_1
          %61 = OpLoad %float %60
-         %62 = OpFSub %float %59 %61
+         %62 = OpFSub %float %61 %float_0
          %63 = OpCompositeConstruct %v2float %54 %62
                OpStore %screen_point %63
          %66 = OpLoad %v2float %screen_point

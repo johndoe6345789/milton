@@ -184,9 +184,8 @@
                OpStore %rp %57
          %62 = OpAccessChain %_ptr_Function_float %rp %uint_1
          %63 = OpLoad %float %62
-         %64 = OpFMul %float %63 %float_n1
          %65 = OpAccessChain %_ptr_Function_float %rp %uint_1
-               OpStore %65 %64
+               OpStore %65 %63
          %66 = OpLoad %v2float %rp
                OpReturnValue %66
                OpFunctionEnd
