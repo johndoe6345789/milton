@@ -229,10 +229,11 @@ static bool find_queue_families() {
 
 static bool create_logical_device() {
     std::vector<VkDeviceQueueCreateInfo> queue_create_infos;
-    std::vector<uint32_t> unique_queue_families = {
-        g_vk_context.graphics_queue_family,
-        g_vk_context.present_queue_family
-    };
+    std::vector<uint32_t> unique_queue_families;
+    unique_queue_families.push_back(g_vk_context.graphics_queue_family);
+    if (g_vk_context.present_queue_family != g_vk_context.graphics_queue_family) {
+        unique_queue_families.push_back(g_vk_context.present_queue_family);
+    }
     
     float queue_priority = 1.0f;
     for (uint32_t queue_family : unique_queue_families) {

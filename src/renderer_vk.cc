@@ -574,7 +574,7 @@ static bool create_canvas_target(RenderBackend* renderer)
     color_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     color_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     color_attachment.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-    color_attachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    color_attachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
     VkAttachmentReference color_ref = {};
     color_ref.attachment = 0;
@@ -1791,9 +1791,6 @@ void gpu_render(RenderBackend* renderer, i32 view_x, i32 view_y, i32 view_width,
     
     VkImageLayout prev_layout = renderer->canvas_layout;
     VkImageLayout next_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-    if (prev_layout == VK_IMAGE_LAYOUT_UNDEFINED) {
-        prev_layout = VK_IMAGE_LAYOUT_UNDEFINED;
-    }
 
     VkImageMemoryBarrier to_color = {};
     to_color.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -1807,11 +1804,19 @@ void gpu_render(RenderBackend* renderer, i32 view_x, i32 view_y, i32 view_width,
     to_color.subresourceRange.levelCount = 1;
     to_color.subresourceRange.baseArrayLayer = 0;
     to_color.subresourceRange.layerCount = 1;
-    to_color.srcAccessMask = 0;
+    if (prev_layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+        to_color.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+    } else {
+        to_color.srcAccessMask = 0;
+    }
     to_color.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    VkPipelineStageFlags src_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+    if (prev_layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+        src_stage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+    }
 
     vkCmdPipelineBarrier(cmd,
-                         VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+                         src_stage,
                          VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
                          0, 0, nullptr, 0, nullptr, 1, &to_color);
     renderer->canvas_layout = next_layout;
