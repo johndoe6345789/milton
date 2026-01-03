@@ -434,10 +434,6 @@ milton_stroke_input(Milton* milton, MiltonInput const* input)
         return;
     }
 
-    if ( milton->view->scale != milton_render_scale(milton) ) {
-        return;  // We can't draw while peeking.
-    }
-
     Stroke* ws = &milton->working_stroke;
 
     if ((milton->flags & MiltonStateFlags_BRUSH_SMOOTHING) && ws->num_points == 0) {
@@ -1570,13 +1566,8 @@ milton_update_and_render(Milton* milton, MiltonInput const* input)
     }
     if ( current_mode_is_for_drawing(milton) &&
         (input->input_count > 0 || end_stroke) ) {
-        if ( !is_user_drawing(milton)
-             && gui_consume_input(milton->gui, input) ) {
-            milton_update_brushes(milton);
-            gpu_update_picker(milton->renderer, &milton->gui->picker);
-        }
-        else if ( !milton->gui->owns_user_input
-                  && (milton->canvas->working_layer->flags & LayerFlags_VISIBLE) ) {
+        milton->gui->owns_user_input = false;
+        if ( milton->canvas->working_layer->flags & LayerFlags_VISIBLE ) {
             if ( milton->current_mode == MiltonMode::PRIMITIVE_LINE ) {
                 milton_primitive_line_input(milton, input, end_stroke);
             }

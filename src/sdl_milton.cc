@@ -267,7 +267,7 @@ sdl_event_loop(Milton* milton, PlatformState* platform)
 
                     v2i point = v2i{(int)long_point.x, (int)long_point.y};
 
-                        if ( !platform->is_panning && point.x >= 0 && point.y >= 0 ) {
+                    if ( point.x >= 0 && point.y >= 0 ) {
                         milton_input.click = point;
 
                         platform->is_pointer_down = true;
@@ -326,8 +326,7 @@ sdl_event_loop(Milton* milton, PlatformState* platform)
                 // point, then it's fine. It will get filtered out in milton_stroke_input
 
                 if (platform->is_pointer_down) {
-                    if (!platform->is_panning &&
-                        (input_point.x >= 0 && input_point.y >= 0)) {
+                    if (input_point.x >= 0 && input_point.y >= 0) {
                         if (platform->num_point_results < MAX_INPUT_BUFFER_ELEMS) {
                             milton_input.points[platform->num_point_results++] = VEC2L(input_point);
                         }
@@ -424,7 +423,7 @@ sdl_event_loop(Milton* milton, PlatformState* platform)
 
     if ( pointer_up ) {
         // Add final point
-        if ( !platform->is_panning && platform->is_pointer_down ) {
+        if ( platform->is_pointer_down ) {
             milton_input.flags |= MiltonInputFlags_END_STROKE;
             if ( pointer_up_has_point ) {
                 input_point = pointer_up_point;
@@ -807,9 +806,7 @@ milton_main(bool is_fullscreen, char* file_to_open)
         }
         
         if ( imgui_has_mouse ) {
-            platform.num_point_results = 0;
-            platform.is_pointer_down = false;
-            input_flags |= MiltonInputFlags_IMGUI_GRABBED_INPUT;
+            // Allow drawing even when ImGui is hovered.
         }
 
         milton_imgui_tick(&milton_input, &platform, milton, &prefs);
@@ -828,7 +825,10 @@ milton_main(bool is_fullscreen, char* file_to_open)
         }
 
         if ( platform.num_pressure_results < platform.num_point_results ) {
-            platform.num_point_results = platform.num_pressure_results;
+            while ( platform.num_pressure_results < platform.num_point_results &&
+                    platform.num_pressure_results < MAX_INPUT_BUFFER_ELEMS ) {
+                milton_input.pressures[platform.num_pressure_results++] = NO_PRESSURE_INFO;
+            }
         }
 
         milton_input.flags = (MiltonInputFlags)( input_flags | (int)milton_input.flags );
