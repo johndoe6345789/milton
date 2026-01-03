@@ -794,9 +794,8 @@ milton_main(bool is_fullscreen, char* file_to_open)
             ImGui::GetIO().WantCaptureMouse = false;
         }
 
-        // Clear our pointer input because we captured an ImGui widget!
-        // Only block input if ImGui wants mouse AND pointer is actually over GUI
-        if ( ImGui::GetIO().WantCaptureMouse && gui_point_hovers(milton->gui, platform.pointer) ) {
+        // Clear our pointer input because ImGui wants to capture the mouse (over any ImGui window/widget)
+        if ( ImGui::GetIO().WantCaptureMouse ) {
             platform.num_point_results = 0;
             platform.is_pointer_down = false;
             input_flags |= MiltonInputFlags_IMGUI_GRABBED_INPUT;
