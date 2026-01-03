@@ -260,7 +260,10 @@ sdl_event_loop(Milton* milton, PlatformState* platform)
                         platform->force_next_frame = true;
                     }
                     else {
-                        v2l long_point = { event.button.x, event.button.y };
+                        v2l long_point = {
+                            static_cast<i64>(event.button.x),
+                            static_cast<i64>(event.button.y)
+                        };
 
                         platform_point_to_pixel(platform, &long_point);
 
@@ -307,7 +310,10 @@ sdl_event_loop(Milton* milton, PlatformState* platform)
                     break;
                 }
 
-                input_point = {event.motion.x, event.motion.y};
+                input_point = {
+                    static_cast<i32>(event.motion.x),
+                    static_cast<i32>(event.motion.y)
+                };
 
                 platform_point_to_pixel_i(platform, &input_point);
 
@@ -420,7 +426,10 @@ sdl_event_loop(Milton* milton, PlatformState* platform)
         // Add final point
         if ( !platform->is_panning && platform->is_pointer_down ) {
             milton_input.flags |= MiltonInputFlags_END_STROKE;
-            input_point = { event.button.x, event.button.y };
+            input_point = {
+                static_cast<i32>(event.button.x),
+                static_cast<i32>(event.button.y)
+            };
 
             platform_point_to_pixel_i(platform, &input_point);
 

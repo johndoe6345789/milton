@@ -13,6 +13,9 @@ namespace vk {
 
 Context g_vk_context = {};
 
+static PFN_vkCreateDebugUtilsMessengerEXT g_vkCreateDebugUtilsMessengerEXT = nullptr;
+static PFN_vkDestroyDebugUtilsMessengerEXT g_vkDestroyDebugUtilsMessengerEXT = nullptr;
+
 void log(const char* message) {
     milton_log("%s", message);
 }
@@ -115,11 +118,19 @@ static bool create_instance(SDL_Window* window) {
         vk::log("Failed to create Vulkan instance\n");
         return false;
     }
+
+    g_vkCreateDebugUtilsMessengerEXT =
+        reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(
+            vkGetInstanceProcAddr(g_vk_context.instance, "vkCreateDebugUtilsMessengerEXT"));
+    g_vkDestroyDebugUtilsMessengerEXT =
+        reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(
+            vkGetInstanceProcAddr(g_vk_context.instance, "vkDestroyDebugUtilsMessengerEXT"));
     
     // Create debug messenger
     if (enable_validation_layers) {
-        if (vkCreateDebugUtilsMessengerEXT(g_vk_context.instance, &debug_create_info, 
-                                          nullptr, &g_vk_context.debug_messenger) != VK_SUCCESS) {
+        if (!g_vkCreateDebugUtilsMessengerEXT ||
+            g_vkCreateDebugUtilsMessengerEXT(g_vk_context.instance, &debug_create_info,
+                                             nullptr, &g_vk_context.debug_messenger) != VK_SUCCESS) {
             vk::log("Failed to set up debug messenger\n");
         }
     }
@@ -552,7 +563,9 @@ void cleanup() {
     }
     
     if (g_vk_context.debug_messenger != VK_NULL_HANDLE) {
-        vkDestroyDebugUtilsMessengerEXT(g_vk_context.instance, g_vk_context.debug_messenger, nullptr);
+        if (g_vkDestroyDebugUtilsMessengerEXT) {
+            g_vkDestroyDebugUtilsMessengerEXT(g_vk_context.instance, g_vk_context.debug_messenger, nullptr);
+        }
     }
     
     if (g_vk_context.surface != VK_NULL_HANDLE) {

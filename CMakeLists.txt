@@ -140,12 +140,10 @@ if(UNIX)
     -Wno-unused-variable
     -Wno-unused-result
     -Wno-write-strings
-    -Wno-c++11-compat-deprecated-writable-strings
     -Wno-null-dereference
     -Wno-format
     -fno-strict-aliasing
     -fno-omit-frame-pointer
-    -Wno-extern-c-compat
   )
 
   if(APPLE)
