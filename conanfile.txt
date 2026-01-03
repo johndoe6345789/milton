@@ -1,6 +1,6 @@
 [requires]
 sdl/3.2.20
-imgui
+imgui/1.92.5
 
 [generators]
 CMakeDeps
