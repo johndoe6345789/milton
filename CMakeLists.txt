@@ -39,19 +39,36 @@ set(CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR} ${CMAKE_PREFIX_PATH})
 find_package(OpenGL REQUIRED)
 find_package(SDL3 CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
+find_package(stb CONFIG REQUIRED)
 find_package(JPEG REQUIRED)
 find_package(Threads REQUIRED)
 find_package(PkgConfig)
 
-# Get imgui package root directory from target properties
-get_target_property(IMGUI_INCLUDE_DIRS imgui::imgui INTERFACE_INCLUDE_DIRECTORIES)
-# Extract the package directory (remove the $<BUILD_INTERFACE:...> generator expression)
-string(REGEX REPLACE "\\$<BUILD_INTERFACE:([^>]+)>.*" "\\1" IMGUI_PACKAGE_INCLUDE "${IMGUI_INCLUDE_DIRS}")
+# Get imgui package root directory - use conan variables directly
+# Conan provides imgui_INCLUDE_DIRS_RELEASE variable
+if(DEFINED imgui_INCLUDE_DIRS_RELEASE)
+  list(GET imgui_INCLUDE_DIRS_RELEASE 0 IMGUI_PACKAGE_INCLUDE)
+elseif(DEFINED imgui_INCLUDE_DIR_RELEASE)
+  set(IMGUI_PACKAGE_INCLUDE "${imgui_INCLUDE_DIR_RELEASE}")
+else()
+  # Fallback - get from target and evaluate
+  get_target_property(IMGUI_INCLUDE_DIRS imgui::imgui INTERFACE_INCLUDE_DIRECTORIES)
+  # Use COMMAND_EXPAND_LISTS to handle generator expressions
+  string(GENEX_STRIP "${IMGUI_INCLUDE_DIRS}" IMGUI_INCLUDE_DIRS_STRIPPED)
+  list(GET IMGUI_INCLUDE_DIRS_STRIPPED 0 IMGUI_PACKAGE_INCLUDE)
+endif()
 get_filename_component(IMGUI_PACKAGE_DIR "${IMGUI_PACKAGE_INCLUDE}" DIRECTORY)
 
-# STB is header-only - get from stb target
-get_target_property(STB_INCLUDE_DIRS stb::stb INTERFACE_INCLUDE_DIRECTORIES)
-string(REGEX REPLACE "\\$<BUILD_INTERFACE:([^>]+)>.*" "\\1" STB_INCLUDE "${STB_INCLUDE_DIRS}")
+# STB is header-only - get from conan variables
+if(DEFINED stb_INCLUDE_DIRS_RELEASE)
+  list(GET stb_INCLUDE_DIRS_RELEASE 0 STB_INCLUDE)
+elseif(DEFINED stb_INCLUDE_DIR_RELEASE)
+  set(STB_INCLUDE "${stb_INCLUDE_DIR_RELEASE}")
+else()
+  get_target_property(STB_INCLUDE_DIRS stb::stb INTERFACE_INCLUDE_DIRECTORIES)
+  string(GENEX_STRIP "${STB_INCLUDE_DIRS}" STB_INCLUDE_DIRS_STRIPPED)
+  list(GET STB_INCLUDE_DIRS_STRIPPED 0 STB_INCLUDE)
+endif()
 
 target_include_directories(Milton PRIVATE
   "${STB_INCLUDE}"
